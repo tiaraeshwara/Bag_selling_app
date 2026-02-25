@@ -1,140 +1,175 @@
 import 'package:flutter/material.dart';
 
-void main() {
-  runApp(const DailyEleganceApp());
-}
+void main() => runApp(const ElegantCosmeticApp());
 
-class DailyEleganceApp extends StatelessWidget {
-  const DailyEleganceApp({super.key});
+class ElegantCosmeticApp extends StatelessWidget {
+  const ElegantCosmeticApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        scaffoldBackgroundColor: const Color(0xFFE5D9C5), // Light Beige
-        fontFamily: 'Serif', // Use a Serif font for that "Elegance" feel
+        useMaterial3: true,
+        // Using a clean, elegant font style
+        fontFamily: 'Serif', 
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFFD7B9AB),
+          surface: const Color(0xFFFDFBF9),
+        ),
       ),
-      home: const MainScreen(),
+      home: const MainNavigationLayout(),
     );
   }
 }
 
-class MainScreen extends StatefulWidget {
-  const MainScreen({super.key});
+class MainNavigationLayout extends StatefulWidget {
+  const MainNavigationLayout({super.key});
 
   @override
-  State<MainScreen> createState() => _MainScreenState();
+  State<MainNavigationLayout> createState() => _MainNavigationLayoutState();
 }
 
-class _MainScreenState extends State<MainScreen> {
-  int _currentIndex = 0;
+class _MainNavigationLayoutState extends State<MainNavigationLayout> {
+  int _selectedIndex = 0;
+  bool _isExtended = false;
 
-  // Navigation Pages
+  // Pages matching the beige/brown theme
   final List<Widget> _pages = [
-    const HomeContent(),
-    const Center(child: Text("Cart")),
-    const Center(child: Text("Search")),
-    const Center(child: Text("Contact")),
-    const Center(child: Text("Profile")),
+    const BagPage(), // Home/Bag view
+    const Center(child: Text("Search Page", style: TextStyle(color: Color(0xFF3E2723)))),
+    const Center(child: Text("Favorites", style: TextStyle(color: Color(0xFF3E2723)))),
+    const Center(child: Text("Profile", style: TextStyle(color: Color(0xFF3E2723)))),
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // We use Stack to create the split background effect from your image
-      body: Stack(
+      backgroundColor: const Color(0xFFF5EFE6), // Base Beige
+      body: Row(
         children: [
-          Row(
-            children: [
-              Expanded(child: Container(color: const Color(0xFFE5D9C5))), // Cream
-              Expanded(child: Container(color: const Color(0xFF2D1B14))), // Dark Brown
+          // --- SIDE NAVIGATION BAR ---
+          NavigationRail(
+            extended: _isExtended,
+            backgroundColor: const Color(0xFFF5EFE6),
+            indicatorColor: const Color(0xFFE8DFD2),
+            selectedIndex: _selectedIndex,
+            onDestinationSelected: (int index) => setState(() => _selectedIndex = index),
+            leading: IconButton(
+              icon: Icon(_isExtended ? Icons.arrow_back_ios : Icons.menu, color: const Color(0xFF3E2723)),
+              onPressed: () => setState(() => _isExtended = !_isExtended),
+            ),
+            unselectedIconTheme: const IconThemeData(color: Colors.brown, opacity: 0.5),
+            selectedIconTheme: const IconThemeData(color: Color(0xFF3E2723), size: 28),
+            destinations: const [
+              NavigationRailDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home), label: Text("Home")),
+              NavigationRailDestination(icon: Icon(Icons.search), label: Text("Search")),
+              NavigationRailDestination(icon: Icon(Icons.favorite_border), label: Text("Saved")),
+              NavigationRailDestination(icon: Icon(Icons.person_outline), label: Text("Account")),
             ],
           ),
-          SafeArea(child: _pages[_currentIndex]),
-        ],
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: (index) => setState(() => _currentIndex = index),
-        type: BottomNavigationBarType.fixed,
-        backgroundColor: Colors.white,
-        selectedItemColor: const Color(0xFF2D1B14),
-        unselectedItemColor: Colors.grey,
-        showSelectedLabels: true,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home_outlined), label: "Home"),
-          BottomNavigationBarItem(icon: Icon(Icons.shopping_bag_outlined), label: "Cart"),
-          BottomNavigationBarItem(icon: Icon(Icons.search), label: "Search"),
-          BottomNavigationBarItem(icon: Icon(Icons.mail_outline), label: "Contact"),
-          BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: "Profile"),
+
+          // --- MAIN CONTENT AREA ---
+          Expanded(
+            child: Container(
+              margin: const EdgeInsets.only(top: 10, bottom: 10, right: 10),
+              decoration: const BoxDecoration(
+                color: Colors.white, // White card for content
+                borderRadius: BorderRadius.all(Radius.circular(40)),
+              ),
+              child: ClipRRect(
+                borderRadius: const BorderRadius.all(Radius.circular(40)),
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 400),
+                  child: _pages[_selectedIndex],
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );
   }
 }
 
-class HomeContent extends StatelessWidget {
-  const HomeContent({super.key});
+class BagPage extends StatelessWidget {
+  const BagPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // 1. Menu Section (Top Bar)
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-          child: Row(
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(30),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text("Featured collection", style: TextStyle(color: Colors.brown, fontSize: 14)),
+          const Text(
+            "TIVRA\nCollection",
+            style: TextStyle(
+              fontSize: 32, 
+              fontWeight: FontWeight.bold, 
+              color: Color(0xFF3E2723),
+              height: 1.1,
+            ),
+          ),
+          const SizedBox(height: 20),
+          
+          // Image Container matching your reference
+          Container(
+            height: 300,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: const Color(0xFFEADFD4),
+              borderRadius: BorderRadius.circular(30),
+              image: const DecorationImage(
+                image: NetworkImage('https://images.unsplash.com/photo-1586776977607-310e9c725c37?w=500'),
+                fit: BoxFit.cover,
+              ),
+            ),
+          ),
+          const SizedBox(height: 30),
+          
+          const Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Icon(Icons.menu, color: Colors.black87),
-              Text(
-                "Daily Elegance".toUpperCase(),
-                style: const TextStyle(
-                  letterSpacing: 2,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                ),
-              ),
-              const Icon(Icons.favorite_border, color: Colors.black87),
+              Text("New Arrivals", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF3E2723))),
+              Text("View all", style: TextStyle(color: Colors.brown, decoration: TextDecoration.underline)),
             ],
           ),
-        ),
-        
-        // 2. Hero Section (Matching your image)
-        Expanded(
-          child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Text(
-                  "Daily\nElegance",
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 60,
-                    color: Colors.white,
-                    height: 0.9,
-                    fontWeight: FontWeight.bold,
-                    fontStyle: FontStyle.italic,
-                  ),
-                ),
-                const SizedBox(height: 40),
-                // Placeholder for your bag image
-                Container(
-                  height: 300,
-                  width: 300,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: const Center(child: Image(image: AssetImage("./assets/homepage_bag.jpg"))),
-                ),
+          const SizedBox(height: 20),
+          
+          // Small items list
+          SizedBox(
+            height: 150,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              children: const [
+                SmallProductCard(name: "Face Palette", color: Color(0xFFF2E8DF)),
+                SmallProductCard(name: "Concealer", color: Color(0xFFEADFD4)),
               ],
             ),
           ),
-        ),
-      ],
+        ],
+      ),
+    );
+  }
+}
+
+class SmallProductCard extends StatelessWidget {
+  final String name;
+  final Color color;
+  const SmallProductCard({super.key, required this.name, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 140,
+      margin: const EdgeInsets.only(right: 15),
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Center(child: Text(name, style: const TextStyle(color: Color(0xFF3E2723), fontWeight: FontWeight.w600))),
     );
   }
 }
