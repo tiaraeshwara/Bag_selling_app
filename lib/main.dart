@@ -980,7 +980,7 @@ class _MainNavigationLayoutState extends State<MainNavigationLayout> {
   }
 }
 
-class _TopNavTextItem extends StatelessWidget {
+class _TopNavTextItem extends StatefulWidget {
   final String label;
   final bool isSelected;
   final VoidCallback onTap;
@@ -992,27 +992,59 @@ class _TopNavTextItem extends StatelessWidget {
   });
 
   @override
+  State<_TopNavTextItem> createState() => _TopNavTextItemState();
+}
+
+class _TopNavTextItemState extends State<_TopNavTextItem> {
+  bool _isHovered = false;
+
+  @override
   Widget build(BuildContext context) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(18),
-      onTap: onTap,
+    final bool isActive = widget.isSelected || _isHovered;
+
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 220),
+        duration: const Duration(milliseconds: 180),
         curve: Curves.easeOut,
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-        decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF6C5A48) : Colors.transparent,
+        transform: Matrix4.identity()..translate(0.0, _isHovered ? -1.5 : 0.0),
+        child: InkWell(
           borderRadius: BorderRadius.circular(18),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            color: isSelected
-                ? const Color(0xFFF7F2E9)
-                : const Color(0xFF6C5A48),
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 0.7,
+          onTap: widget.onTap,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            curve: Curves.easeOut,
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+            decoration: BoxDecoration(
+              color: widget.isSelected
+                  ? const Color(0xFF6C5A48)
+                  : _isHovered
+                  ? const Color(0x336C5A48)
+                  : Colors.transparent,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(
+                color: _isHovered && !widget.isSelected
+                    ? const Color(0x336C5A48)
+                    : Colors.transparent,
+                width: 1,
+              ),
+            ),
+            child: AnimatedDefaultTextStyle(
+              duration: const Duration(milliseconds: 180),
+              curve: Curves.easeOut,
+              style: TextStyle(
+                color: widget.isSelected
+                    ? const Color(0xFFF7F2E9)
+                    : isActive
+                    ? const Color(0xFF5A4738)
+                    : const Color(0xFF6C5A48),
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                letterSpacing: isActive ? 0.9 : 0.7,
+              ),
+              child: Text(widget.label),
+            ),
           ),
         ),
       ),
