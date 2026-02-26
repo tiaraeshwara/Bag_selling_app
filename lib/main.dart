@@ -15,9 +15,22 @@ class ElegantCosmeticApp extends StatelessWidget {
         useMaterial3: true,
         // Using a clean, elegant font style
         fontFamily: 'Serif',
+        scaffoldBackgroundColor: Colors.transparent,
         colorScheme: ColorScheme.fromSeed(
           seedColor: const Color(0xFFD7B9AB),
           surface: const Color(0xFFFDFBF9),
+        ),
+        dialogTheme: const DialogThemeData(
+          backgroundColor: Colors.transparent,
+          surfaceTintColor: Colors.transparent,
+        ),
+        inputDecorationTheme: InputDecorationTheme(
+          filled: true,
+          fillColor: Colors.white.withOpacity(0.35),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
+          ),
         ),
       ),
       home: const MainNavigationLayout(),
@@ -34,21 +47,44 @@ class MainNavigationLayout extends StatefulWidget {
 
 class _MainNavigationLayoutState extends State<MainNavigationLayout> {
   int _selectedIndex = 0;
-  bool _isExtended = false;
+  final GlobalKey<_BagPageState> _bagPageKey = GlobalKey<_BagPageState>();
+  final Map<String, ArrivalBag> _favoriteItems = {};
 
   // Pages matching the beige/brown theme
-  final List<Widget> _pages = [
-    const BagPage(), // Home/Bag view
+  List<Widget> get _pages => [
+    BagPage(
+      key: _bagPageKey,
+      onToggleFavorite: _toggleFavorite,
+      isFavorite: _isFavorite,
+    ), // Home/Bag view
     const Center(
       child: Text("Search Page", style: TextStyle(color: Color(0xFF3E2723))),
     ),
-    const Center(
-      child: Text("Favorites", style: TextStyle(color: Color(0xFF3E2723))),
-    ),
+    SavedPage(favoriteItems: _favoriteItems.values.toList(growable: false)),
     const Center(
       child: Text("Profile", style: TextStyle(color: Color(0xFF3E2723))),
     ),
   ];
+
+  bool _isFavorite(String bagName) => _favoriteItems.containsKey(bagName);
+
+  void _toggleFavorite(ArrivalBag item) {
+    setState(() {
+      if (_favoriteItems.containsKey(item.name)) {
+        _favoriteItems.remove(item.name);
+      } else {
+        _favoriteItems[item.name] = item;
+      }
+    });
+  }
+
+  void _openSearchFromNavigation() {
+    setState(() => _selectedIndex = 0);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _bagPageKey.currentState?.openSearchPopupAndGoToNewArrivals();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -62,55 +98,156 @@ class _MainNavigationLayoutState extends State<MainNavigationLayout> {
           ),
         ),
         child: SafeArea(
-          child: Row(
+          child: Column(
             children: [
               Padding(
-                padding: const EdgeInsets.fromLTRB(10, 10, 0, 10),
+                padding: const EdgeInsets.fromLTRB(10, 6, 10, 4),
                 child: GlassCard(
                   borderRadius: BorderRadius.circular(28),
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  child: NavigationRail(
-                    extended: _isExtended,
-                    backgroundColor: Colors.transparent,
-                    indicatorColor: Colors.white.withOpacity(0.45),
-                    selectedIndex: _selectedIndex,
-                    onDestinationSelected: (int index) =>
-                        setState(() => _selectedIndex = index),
-                    leading: IconButton(
-                      icon: Icon(
-                        _isExtended ? Icons.arrow_back_ios : Icons.menu,
-                        color: const Color(0xFF3E2723),
-                      ),
-                      onPressed: () =>
-                          setState(() => _isExtended = !_isExtended),
-                    ),
-                    unselectedIconTheme: const IconThemeData(
-                      color: Colors.brown,
-                      opacity: 0.6,
-                    ),
-                    selectedIconTheme: const IconThemeData(
-                      color: Color(0xFF3E2723),
-                      size: 28,
-                    ),
-                    destinations: const [
-                      NavigationRailDestination(
-                        icon: Icon(Icons.home_outlined),
-                        selectedIcon: Icon(Icons.home),
-                        label: Text("Home"),
-                      ),
-                      NavigationRailDestination(
-                        icon: Icon(Icons.search),
-                        label: Text("Search"),
-                      ),
-                      NavigationRailDestination(
-                        icon: Icon(Icons.favorite_border),
-                        label: Text("Saved"),
-                      ),
-                      NavigationRailDestination(
-                        icon: Icon(Icons.person_outline),
-                        label: Text("Account"),
-                      ),
-                    ],
+                  tint: const Color(0xEAF4F0E8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 2,
+                  ),
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final bool isCompact = constraints.maxWidth < 760;
+
+                      if (isCompact) {
+                        return SizedBox(
+                          height: 44,
+                          child: Row(
+                            children: [
+                              const Padding(
+                                padding: EdgeInsets.only(left: 4),
+                                child: Text(
+                                  'TIVRA',
+                                  style: TextStyle(
+                                    color: Color(0xFF2F241F),
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: 0.8,
+                                  ),
+                                ),
+                              ),
+                              const Spacer(),
+                              IconButton(
+                                onPressed: _openSearchFromNavigation,
+                                iconSize: 22,
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints.tightFor(
+                                  width: 34,
+                                  height: 34,
+                                ),
+                                icon: const Icon(Icons.search),
+                                color: const Color(0xFF6C5A48),
+                                tooltip: 'Search',
+                              ),
+                              IconButton(
+                                onPressed: () =>
+                                    setState(() => _selectedIndex = 2),
+                                iconSize: 22,
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints.tightFor(
+                                  width: 34,
+                                  height: 34,
+                                ),
+                                icon: const Icon(Icons.favorite_border),
+                                color: const Color(0xFF6C5A48),
+                                tooltip: 'Saved',
+                              ),
+                              IconButton(
+                                onPressed: () =>
+                                    setState(() => _selectedIndex = 3),
+                                iconSize: 22,
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints.tightFor(
+                                  width: 34,
+                                  height: 34,
+                                ),
+                                icon: const Icon(Icons.person_outline),
+                                color: const Color(0xFF6C5A48),
+                                tooltip: 'Profile',
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+
+                      return SizedBox(
+                        height: 52,
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            const Padding(
+                              padding: EdgeInsets.only(left: 6, right: 18),
+                              child: Text(
+                                'TIVRA',
+                                style: TextStyle(
+                                  color: Color(0xFF2F241F),
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: 1.2,
+                                ),
+                              ),
+                            ),
+                            Expanded(
+                              child: Wrap(
+                                alignment: WrapAlignment.center,
+                                spacing: 10,
+                                children: [
+                                  _TopNavTextItem(
+                                    label: 'HOME',
+                                    isSelected: _selectedIndex == 0,
+                                    onTap: () =>
+                                        setState(() => _selectedIndex = 0),
+                                  ),
+                                  _TopNavTextItem(
+                                    label: 'SEARCH',
+                                    isSelected: false,
+                                    onTap: _openSearchFromNavigation,
+                                  ),
+                                  _TopNavTextItem(
+                                    label: 'SAVED',
+                                    isSelected: _selectedIndex == 2,
+                                    onTap: () =>
+                                        setState(() => _selectedIndex = 2),
+                                  ),
+                                  _TopNavTextItem(
+                                    label: 'ACCOUNT',
+                                    isSelected: _selectedIndex == 3,
+                                    onTap: () =>
+                                        setState(() => _selectedIndex = 3),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            IconButton(
+                              onPressed: () =>
+                                  setState(() => _selectedIndex = 3),
+                              icon: const Icon(Icons.person_outline),
+                              color: const Color(0xFF6C5A48),
+                              tooltip: 'Profile',
+                            ),
+                            IconButton(
+                              onPressed: () =>
+                                  setState(() => _selectedIndex = 2),
+                              icon: const Icon(Icons.favorite_border),
+                              color: const Color(0xFF6C5A48),
+                              tooltip: 'Saved',
+                            ),
+                            IconButton(
+                              onPressed: () =>
+                                  setState(() => _selectedIndex = 0),
+                              icon: const Icon(Icons.shopping_bag_outlined),
+                              color: const Color(0xFF6C5A48),
+                              tooltip: 'Shop',
+                            ),
+                          ],
+                        ),
+                      );
+                    },
                   ),
                 ),
               ),
@@ -141,8 +278,228 @@ class _MainNavigationLayoutState extends State<MainNavigationLayout> {
   }
 }
 
+class _TopNavTextItem extends StatelessWidget {
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _TopNavTextItem({
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(18),
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 220),
+        curve: Curves.easeOut,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFF6C5A48) : Colors.transparent,
+          borderRadius: BorderRadius.circular(18),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isSelected
+                ? const Color(0xFFF7F2E9)
+                : const Color(0xFF6C5A48),
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.7,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class SavedPage extends StatelessWidget {
+  final List<ArrivalBag> favoriteItems;
+
+  const SavedPage({super.key, required this.favoriteItems});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(18),
+      child: GlassCard(
+        borderRadius: BorderRadius.circular(30),
+        tint: Colors.white.withOpacity(0.22),
+        padding: const EdgeInsets.all(18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Saved Favorites',
+              style: TextStyle(
+                color: Color(0xFF3E2723),
+                fontSize: 24,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Expanded(
+              child: favoriteItems.isEmpty
+                  ? const Center(
+                      child: Text(
+                        'No favorite items yet. Tap hearts in New Arrivals.',
+                        style: TextStyle(
+                          color: Color(0xFF5D4037),
+                          fontWeight: FontWeight.w600,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    )
+                  : ListView.separated(
+                      itemCount: favoriteItems.length,
+                      separatorBuilder: (_, __) =>
+                          const Divider(color: Color(0x333E2723), height: 14),
+                      itemBuilder: (context, index) {
+                        final ArrivalBag item = favoriteItems[index];
+                        return ListTile(
+                          onTap: () {
+                            showDialog<void>(
+                              context: context,
+                              builder: (dialogContext) {
+                                return Dialog(
+                                  backgroundColor: Colors.transparent,
+                                  child: GlassCard(
+                                    borderRadius: BorderRadius.circular(26),
+                                    tint: Colors.white.withOpacity(0.18),
+                                    padding: const EdgeInsets.all(16),
+                                    child: ConstrainedBox(
+                                      constraints: const BoxConstraints(
+                                        maxWidth: 520,
+                                      ),
+                                      child: Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          ClipRRect(
+                                            borderRadius: BorderRadius.circular(
+                                              18,
+                                            ),
+                                            child: AspectRatio(
+                                              aspectRatio: 16 / 10,
+                                              child: Image.asset(
+                                                item.imagePath,
+                                                fit: BoxFit.cover,
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(height: 14),
+                                          Text(
+                                            item.name,
+                                            style: const TextStyle(
+                                              color: Color(0xFF3E2723),
+                                              fontSize: 28,
+                                              fontWeight: FontWeight.w800,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 8),
+                                          Text(
+                                            'Price: \$${item.price}',
+                                            style: const TextStyle(
+                                              color: Color(0xFF4E342E),
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w700,
+                                            ),
+                                          ),
+                                          Text(
+                                            'Category: ${item.category}',
+                                            style: const TextStyle(
+                                              color: Color(0xFF5D4037),
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                          Text(
+                                            'Material: ${item.material}',
+                                            style: const TextStyle(
+                                              color: Color(0xFF5D4037),
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                          Text(
+                                            'Color: ${item.color}',
+                                            style: const TextStyle(
+                                              color: Color(0xFF5D4037),
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 12),
+                                          Align(
+                                            alignment: Alignment.centerRight,
+                                            child: TextButton(
+                                              onPressed: () =>
+                                                  Navigator.pop(dialogContext),
+                                              child: const Text('Close'),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
+                            );
+                          },
+                          contentPadding: EdgeInsets.zero,
+                          leading: ClipRRect(
+                            borderRadius: BorderRadius.circular(10),
+                            child: Image.asset(
+                              item.imagePath,
+                              width: 52,
+                              height: 52,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                          title: Text(
+                            item.name,
+                            style: const TextStyle(
+                              color: Color(0xFF3E2723),
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          subtitle: Text(
+                            '${item.category} • ${item.color}',
+                            style: const TextStyle(
+                              color: Color(0xFF6C5A48),
+                              fontSize: 12,
+                            ),
+                          ),
+                          trailing: Text(
+                            '\$${item.price}',
+                            style: const TextStyle(
+                              color: Color(0xFF4E342E),
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class BagPage extends StatefulWidget {
-  const BagPage({super.key});
+  final ValueChanged<ArrivalBag> onToggleFavorite;
+  final bool Function(String bagName) isFavorite;
+
+  const BagPage({
+    super.key,
+    required this.onToggleFavorite,
+    required this.isFavorite,
+  });
 
   @override
   State<BagPage> createState() => _BagPageState();
@@ -151,6 +508,165 @@ class BagPage extends StatefulWidget {
 class _BagPageState extends State<BagPage> {
   final Map<String, int> _selectedCounts = {};
   final Map<String, ArrivalBag> _selectedItems = {};
+  final GlobalKey _newArrivalsSectionKey = GlobalKey();
+
+  Future<void> openSearchPopupAndGoToNewArrivals() async {
+    await _scrollToNewArrivalsSection();
+    if (!mounted) return;
+    await _showBagSearchPopup();
+  }
+
+  Future<void> _scrollToNewArrivalsSection() async {
+    final BuildContext? sectionContext = _newArrivalsSectionKey.currentContext;
+    if (sectionContext == null) return;
+
+    await Scrollable.ensureVisible(
+      sectionContext,
+      duration: const Duration(milliseconds: 500),
+      curve: Curves.easeOut,
+      alignment: 0.08,
+    );
+  }
+
+  Future<void> _showBagSearchPopup() async {
+    if (!mounted) return;
+
+    final TextEditingController searchController = TextEditingController();
+    String query = '';
+
+    List<ArrivalBag> _matchingBags(String value) {
+      final String normalized = value.trim().toLowerCase();
+      if (normalized.isEmpty) {
+        return _NewArrivalSectionState._items.take(8).toList();
+      }
+
+      return _NewArrivalSectionState._items.where((bag) {
+        return bag.name.toLowerCase().contains(normalized) ||
+            bag.category.toLowerCase().contains(normalized) ||
+            bag.color.toLowerCase().contains(normalized) ||
+            bag.material.toLowerCase().contains(normalized);
+      }).toList();
+    }
+
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          child: GlassCard(
+            borderRadius: BorderRadius.circular(24),
+            tint: Colors.white.withOpacity(0.18),
+            padding: const EdgeInsets.all(16),
+            child: StatefulBuilder(
+              builder: (context, setDialogState) {
+                final List<ArrivalBag> suggestions = _matchingBags(query);
+
+                return SizedBox(
+                  width: 540,
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxHeight: 500),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Search Bags',
+                          style: TextStyle(
+                            color: Color(0xFF3E2723),
+                            fontSize: 22,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        TextField(
+                          controller: searchController,
+                          autofocus: true,
+                          onChanged: (value) {
+                            setDialogState(() {
+                              query = value;
+                            });
+                          },
+                          decoration: const InputDecoration(
+                            hintText: 'Type bag name, color, category...',
+                            prefixIcon: Icon(Icons.search_rounded),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Expanded(
+                          child: suggestions.isEmpty
+                              ? const Center(
+                                  child: Text(
+                                    'No similar bags found.',
+                                    style: TextStyle(
+                                      color: Color(0xFF5D4037),
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                )
+                              : ListView.separated(
+                                  itemCount: suggestions.length,
+                                  separatorBuilder: (_, __) => const Divider(
+                                    color: Color(0x333E2723),
+                                    height: 10,
+                                  ),
+                                  itemBuilder: (context, index) {
+                                    final ArrivalBag bag = suggestions[index];
+                                    return ListTile(
+                                      contentPadding: EdgeInsets.zero,
+                                      leading: ClipRRect(
+                                        borderRadius: BorderRadius.circular(10),
+                                        child: Image.asset(
+                                          bag.imagePath,
+                                          width: 48,
+                                          height: 48,
+                                          fit: BoxFit.cover,
+                                        ),
+                                      ),
+                                      title: Text(
+                                        bag.name,
+                                        style: const TextStyle(
+                                          color: Color(0xFF3E2723),
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                      subtitle: Text(
+                                        '${bag.category} • ${bag.color}',
+                                        style: const TextStyle(
+                                          color: Color(0xFF6C5A48),
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                      trailing: Text(
+                                        '\$${bag.price}',
+                                        style: const TextStyle(
+                                          color: Color(0xFF4E342E),
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
+                        ),
+                        const SizedBox(height: 8),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: TextButton(
+                            onPressed: () => Navigator.pop(dialogContext),
+                            child: const Text('Close'),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        );
+      },
+    );
+
+    searchController.dispose();
+  }
 
   int get _totalBill {
     int total = 0;
@@ -163,17 +679,99 @@ class _BagPageState extends State<BagPage> {
     return total;
   }
 
+  int get _selectedItemCount {
+    int count = 0;
+    for (final int quantity in _selectedCounts.values) {
+      count += quantity;
+    }
+    return count;
+  }
+
   void _addSelectedItem(ArrivalBag item) {
     setState(() {
       _selectedItems[item.name] = item;
       _selectedCounts[item.name] = (_selectedCounts[item.name] ?? 0) + 1;
     });
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('${item.name} added to bill'),
-        duration: const Duration(milliseconds: 900),
-      ),
+    _showSelectedItemsPopup();
+  }
+
+  void _increaseItem(String itemName) {
+    setState(() {
+      _selectedCounts[itemName] = (_selectedCounts[itemName] ?? 0) + 1;
+    });
+  }
+
+  void _decreaseItem(String itemName) {
+    setState(() {
+      final int currentQty = _selectedCounts[itemName] ?? 0;
+      if (currentQty <= 1) {
+        _selectedCounts.remove(itemName);
+        _selectedItems.remove(itemName);
+      } else {
+        _selectedCounts[itemName] = currentQty - 1;
+      }
+    });
+  }
+
+  void _removeItem(String itemName) {
+    setState(() {
+      _selectedCounts.remove(itemName);
+      _selectedItems.remove(itemName);
+    });
+  }
+
+  Future<void> _showSelectedItemsPopup() async {
+    if (!mounted) return;
+
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          child: GlassCard(
+            borderRadius: BorderRadius.circular(24),
+            tint: Colors.white.withOpacity(0.18),
+            padding: const EdgeInsets.all(18),
+            child: StatefulBuilder(
+              builder: (context, setDialogState) {
+                return SizedBox(
+                  width: 520,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Selected Items',
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF3E2723),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      SingleChildScrollView(
+                        child: _buildBillingSection(
+                          isPopup: true,
+                          onChanged: () => setDialogState(() {}),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton(
+                          onPressed: () => Navigator.pop(dialogContext),
+                          child: const Text('Close'),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -187,55 +785,77 @@ class _BagPageState extends State<BagPage> {
     final bool? hasBankDetails = await showDialog<bool>(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          title: const Text('Add Bank Details'),
-          content: SizedBox(
-            width: 380,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: bankController,
-                  decoration: const InputDecoration(labelText: 'Bank Name'),
-                ),
-                TextField(
-                  controller: accountController,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    labelText: 'Account Number',
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          child: GlassCard(
+            borderRadius: BorderRadius.circular(22),
+            tint: Colors.white.withOpacity(0.20),
+            padding: const EdgeInsets.all(18),
+            child: SizedBox(
+              width: 380,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Add Bank Details',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF3E2723),
+                    ),
                   ),
-                ),
-                TextField(
-                  controller: holderController,
-                  decoration: const InputDecoration(
-                    labelText: 'Account Holder Name',
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: bankController,
+                    decoration: const InputDecoration(labelText: 'Bank Name'),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: accountController,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: 'Account Number',
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: holderController,
+                    decoration: const InputDecoration(
+                      labelText: 'Account Holder Name',
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, false),
+                        child: const Text('Cancel'),
+                      ),
+                      const SizedBox(width: 8),
+                      ElevatedButton(
+                        onPressed: () {
+                          if (bankController.text.trim().isEmpty ||
+                              accountController.text.trim().isEmpty ||
+                              holderController.text.trim().isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Please fill all bank details'),
+                              ),
+                            );
+                            return;
+                          }
+                          Navigator.pop(context, true);
+                        },
+                        child: const Text('Save Details'),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                if (bankController.text.trim().isEmpty ||
-                    accountController.text.trim().isEmpty ||
-                    holderController.text.trim().isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Please fill all bank details'),
-                    ),
-                  );
-                  return;
-                }
-                Navigator.pop(context, true);
-              },
-              child: const Text('Save Details'),
-            ),
-          ],
         );
       },
     );
@@ -245,19 +865,50 @@ class _BagPageState extends State<BagPage> {
     final bool? confirmPay = await showDialog<bool>(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          title: const Text('Confirm Payment'),
-          content: Text('Are you sure to pay \$$_totalBill ?'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('No'),
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          child: GlassCard(
+            borderRadius: BorderRadius.circular(22),
+            tint: Colors.white.withOpacity(0.20),
+            padding: const EdgeInsets.all(18),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Confirm Payment',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF3E2723),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  'Are you sure to pay \$$_totalBill ?',
+                  style: const TextStyle(
+                    color: Color(0xFF4E342E),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context, false),
+                      child: const Text('No'),
+                    ),
+                    const SizedBox(width: 8),
+                    ElevatedButton(
+                      onPressed: () => Navigator.pop(context, true),
+                      child: const Text('Pay Now'),
+                    ),
+                  ],
+                ),
+              ],
             ),
-            ElevatedButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text('Pay Now'),
-            ),
-          ],
+          ),
         );
       },
     );
@@ -273,7 +924,7 @@ class _BagPageState extends State<BagPage> {
     }
   }
 
-  Widget _buildBillingSection() {
+  Widget _buildBillingSection({VoidCallback? onChanged, bool isPopup = false}) {
     return GlassCard(
       borderRadius: BorderRadius.circular(24),
       tint: Colors.white.withOpacity(0.26),
@@ -304,26 +955,75 @@ class _BagPageState extends State<BagPage> {
               if (item == null) return const SizedBox.shrink();
               final int lineTotal = item.price * entry.value;
               return Padding(
-                padding: const EdgeInsets.only(bottom: 6),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                padding: const EdgeInsets.only(bottom: 10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      child: Text(
-                        '${item.name} x${entry.value}',
-                        style: const TextStyle(
-                          color: Color(0xFF4E342E),
-                          fontWeight: FontWeight.w600,
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            item.name,
+                            style: const TextStyle(
+                              color: Color(0xFF4E342E),
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
                         ),
-                      ),
+                        Text(
+                          '\$$lineTotal',
+                          style: const TextStyle(
+                            color: Color(0xFF4E342E),
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
                     ),
-                    Text(
-                      '\$$lineTotal',
-                      style: const TextStyle(
-                        color: Color(0xFF4E342E),
-                        fontWeight: FontWeight.w700,
-                      ),
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        IconButton(
+                          onPressed: () {
+                            _decreaseItem(item.name);
+                            onChanged?.call();
+                          },
+                          icon: const Icon(Icons.remove_circle_outline),
+                          color: const Color(0xFF5D4037),
+                          visualDensity: VisualDensity.compact,
+                        ),
+                        Text(
+                          'Qty: ${entry.value}',
+                          style: const TextStyle(
+                            color: Color(0xFF4E342E),
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () {
+                            _increaseItem(item.name);
+                            onChanged?.call();
+                          },
+                          icon: const Icon(Icons.add_circle_outline),
+                          color: const Color(0xFF5D4037),
+                          visualDensity: VisualDensity.compact,
+                        ),
+                        const Spacer(),
+                        TextButton.icon(
+                          onPressed: () {
+                            _removeItem(item.name);
+                            onChanged?.call();
+                          },
+                          icon: const Icon(Icons.delete_outline, size: 18),
+                          label: const Text('Remove'),
+                          style: TextButton.styleFrom(
+                            foregroundColor: const Color(0xFF5D4037),
+                            padding: EdgeInsets.zero,
+                          ),
+                        ),
+                      ],
                     ),
+                    const Divider(color: Color(0x333E2723), height: 6),
                   ],
                 ),
               );
@@ -355,7 +1055,14 @@ class _BagPageState extends State<BagPage> {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: _selectedCounts.isEmpty ? null : _openPaymentFlow,
+              onPressed: _selectedCounts.isEmpty
+                  ? null
+                  : () {
+                      if (isPopup) {
+                        Navigator.of(context).pop();
+                      }
+                      _openPaymentFlow();
+                    },
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFFF8EFE8),
                 foregroundColor: const Color(0xFF5D4037),
@@ -376,113 +1083,410 @@ class _BagPageState extends State<BagPage> {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(30),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            "Featured collection",
-            style: TextStyle(color: Colors.brown, fontSize: 14),
-          ),
-          const Text(
-            "TIVRA\nCollection",
-            style: TextStyle(
-              fontSize: 32,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF3E2723),
-              height: 1.1,
-            ),
-          ),
-          const SizedBox(height: 20),
+    return LayoutBuilder(
+      builder: (context, pageConstraints) {
+        final bool isCompactPage = pageConstraints.maxWidth < 700;
+        final double pagePadding = isCompactPage ? 14 : 30;
+        final double heroHeight = isCompactPage ? 320 : 500;
 
-          // Search bar section
-          GlassCard(
-            borderRadius: BorderRadius.circular(18),
-            tint: Colors.white.withOpacity(0.24),
-            padding: const EdgeInsets.symmetric(horizontal: 14),
-            child: const TextField(
-              style: TextStyle(color: Color(0xFF3E2723)),
-              decoration: InputDecoration(
-                prefixIcon: Icon(Icons.search, color: Color(0xFF3E2723)),
-                hintText: 'Search bags',
-                hintStyle: TextStyle(color: Colors.brown),
-                border: InputBorder.none,
-              ),
-            ),
-          ),
-          const SizedBox(height: 20),
+        return SingleChildScrollView(
+          padding: EdgeInsets.all(pagePadding),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final bool isCompact = constraints.maxWidth < 560;
 
-          // Image Container matching your reference
-          ClipRRect(
-            borderRadius: BorderRadius.circular(30),
-            child: Container(
-              height: 500,
-              width: double.infinity,
-              decoration: const BoxDecoration(
-                image: DecorationImage(
-                  image: AssetImage('assets/bag7.jpg'),
-                  fit: BoxFit.cover,
-                ),
-              ),
-              child: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.white.withOpacity(0.12),
-                      Colors.black.withOpacity(0.10),
+                  final Widget searchField = GlassCard(
+                    borderRadius: BorderRadius.circular(22),
+                    tint: Colors.white.withOpacity(0.22),
+                    padding: const EdgeInsets.all(3),
+                    child: Container(
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.35),
+                        borderRadius: BorderRadius.circular(18),
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.45),
+                        ),
+                      ),
+                      child: TextField(
+                        readOnly: true,
+                        onTap: openSearchPopupAndGoToNewArrivals,
+                        style: const TextStyle(
+                          color: Color(0xFF4E342E),
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        cursorColor: const Color(0xFF5D4037),
+                        decoration: const InputDecoration(
+                          isDense: true,
+                          contentPadding: EdgeInsets.symmetric(vertical: 10),
+                          hintText: 'Tap to search bags',
+                          hintStyle: TextStyle(
+                            color: Color(0xFF6C5A48),
+                            fontSize: 15,
+                            letterSpacing: 0.3,
+                          ),
+                          prefixIcon: Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 10),
+                            child: Icon(
+                              Icons.search_rounded,
+                              size: 26,
+                              color: Color(0xFF4E342E),
+                            ),
+                          ),
+                          prefixIconConstraints: BoxConstraints(
+                            minWidth: 44,
+                            minHeight: 40,
+                          ),
+                          border: InputBorder.none,
+                        ),
+                      ),
+                    ),
+                  );
+
+                  final Widget cartButton = Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      GlassCard(
+                        borderRadius: BorderRadius.circular(14),
+                        tint: Colors.white.withOpacity(0.28),
+                        padding: EdgeInsets.zero,
+                        child: IconButton(
+                          onPressed: _showSelectedItemsPopup,
+                          icon: const Icon(
+                            Icons.shopping_bag_outlined,
+                            color: Color(0xFF3E2723),
+                          ),
+                          tooltip: 'Open selected items',
+                        ),
+                      ),
+                      if (_selectedItemCount > 0)
+                        Positioned(
+                          right: -4,
+                          top: -6,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF5D4037),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              '$_selectedItemCount',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                        ),
                     ],
+                  );
+
+                  return isCompact
+                      ? Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  "Featured collection",
+                                  style: TextStyle(
+                                    color: Colors.brown,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                                Text(
+                                  "TIVRA\nCollection",
+                                  style: TextStyle(
+                                    fontSize: 32,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF3E2723),
+                                    height: 1.1,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            Row(
+                              children: [
+                                Expanded(child: searchField),
+                                const SizedBox(width: 10),
+                                cartButton,
+                              ],
+                            ),
+                          ],
+                        )
+                      : Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  "Featured collection",
+                                  style: TextStyle(
+                                    color: Colors.brown,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                                Text(
+                                  "TIVRA\nCollection",
+                                  style: TextStyle(
+                                    fontSize: 32,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF3E2723),
+                                    height: 1.1,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            Row(
+                              children: [
+                                SizedBox(width: 210, child: searchField),
+                                const SizedBox(width: 10),
+                                cartButton,
+                              ],
+                            ),
+                          ],
+                        );
+                },
+              ),
+              const SizedBox(height: 20),
+
+              ClipRRect(
+                borderRadius: BorderRadius.circular(30),
+                child: Container(
+                  height: heroHeight,
+                  width: double.infinity,
+                  decoration: const BoxDecoration(
+                    image: DecorationImage(
+                      image: AssetImage('assets/bag7.jpg'),
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.white.withOpacity(0.12),
+                          Colors.black.withOpacity(0.10),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
               ),
-            ),
-          ),
-          const SizedBox(height: 30),
+              const SizedBox(height: 30),
 
-          const Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                "New Arrivals",
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF3E2723),
+              const Wrap(
+                alignment: WrapAlignment.spaceBetween,
+                spacing: 12,
+                runSpacing: 6,
+                children: [
+                  Text(
+                    "New Arrivals",
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF3E2723),
+                    ),
+                  ),
+                  Text(
+                    "View all",
+                    style: TextStyle(
+                      color: Colors.brown,
+                      decoration: TextDecoration.underline,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+
+              KeyedSubtree(
+                key: _newArrivalsSectionKey,
+                child: NewArrivalSection(
+                  onBuyNow: _addSelectedItem,
+                  onToggleFavorite: widget.onToggleFavorite,
+                  isFavorite: widget.isFavorite,
                 ),
               ),
-              Text(
-                "View all",
-                style: TextStyle(
-                  color: Colors.brown,
-                  decoration: TextDecoration.underline,
+
+              const SizedBox(height: 30),
+
+              BagDescriptionSection(isCompact: isCompactPage),
+
+              const SizedBox(height: 30),
+
+              SizedBox(
+                height: 150,
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  children: const [
+                    SmallProductCard(
+                      name: "Face Palette",
+                      color: Color(0xFFF2E8DF),
+                    ),
+                    SmallProductCard(
+                      name: "Concealer",
+                      color: Color(0xFFEADFD4),
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 20),
+        );
+      },
+    );
+  }
+}
 
-          // New arrivals detailed cards section
-          NewArrivalSection(onBuyNow: _addSelectedItem),
+class BagDescriptionSection extends StatelessWidget {
+  final bool isCompact;
 
-          const SizedBox(height: 24),
-          _buildBillingSection(),
+  const BagDescriptionSection({super.key, required this.isCompact});
 
-          const SizedBox(height: 30),
+  static const List<_BagStory> _stories = [
+    _BagStory(
+      title: 'Classic Fit Review:\nWhy TIVRA Bags Stand Out',
+      description:
+          'Designed for everyday elegance with premium finishing, balanced shape, and timeless style.',
+      imagePath: 'assets/bag1.jpg',
+    ),
+    _BagStory(
+      title: 'Minimal Luxury\nFor Every Look',
+      description:
+          'Soft material, clean silhouette, and practical inner space for your daily essentials.',
+      imagePath: 'assets/bag2.jpg',
+    ),
+    _BagStory(
+      title: 'Crafted Details\nYou Can Feel',
+      description:
+          'From stitching to hardware, each element is made to deliver comfort and durability.',
+      imagePath: 'assets/bag3.jpg',
+    ),
+    _BagStory(
+      title: 'Modern Shapes\nWith Premium Finish',
+      description:
+          'Statement-ready forms in warm tones, made to pair with both casual and formal outfits.',
+      imagePath: 'assets/bag4.jpg',
+    ),
+  ];
 
-          // Small items list
-          SizedBox(
-            height: 150,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              children: const [
-                SmallProductCard(
-                  name: "Face Palette",
-                  color: Color(0xFFF2E8DF),
-                ),
-                SmallProductCard(name: "Concealer", color: Color(0xFFEADFD4)),
-              ],
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: List.generate(_stories.length, (index) {
+        final _BagStory item = _stories[index];
+        final bool reverse = index.isOdd;
+
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: index == _stories.length - 1 ? 0 : 18,
+          ),
+          child: GlassCard(
+            borderRadius: BorderRadius.circular(24),
+            tint: Colors.white.withOpacity(0.24),
+            padding: const EdgeInsets.all(14),
+            child: isCompact
+                ? Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(18),
+                        child: SizedBox(
+                          height: 170,
+                          width: double.infinity,
+                          child: _BagStoryImage(imagePath: item.imagePath),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      _BagStoryText(item: item, isCompact: true),
+                    ],
+                  )
+                : SizedBox(
+                    height: 250,
+                    child: Row(
+                      children: reverse
+                          ? [
+                              Expanded(
+                                child: _BagStoryImage(
+                                  imagePath: item.imagePath,
+                                ),
+                              ),
+                              const SizedBox(width: 18),
+                              Expanded(
+                                child: _BagStoryText(
+                                  item: item,
+                                  isCompact: false,
+                                ),
+                              ),
+                            ]
+                          : [
+                              Expanded(
+                                child: _BagStoryText(
+                                  item: item,
+                                  isCompact: false,
+                                ),
+                              ),
+                              const SizedBox(width: 18),
+                              Expanded(
+                                child: _BagStoryImage(
+                                  imagePath: item.imagePath,
+                                ),
+                              ),
+                            ],
+                    ),
+                  ),
+          ),
+        );
+      }),
+    );
+  }
+}
+
+class _BagStoryText extends StatelessWidget {
+  final _BagStory item;
+  final bool isCompact;
+
+  const _BagStoryText({required this.item, required this.isCompact});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            item.title,
+            style: TextStyle(
+              color: Color(0xFF5A3D33),
+              fontSize: isCompact ? 24 : 34,
+              height: 1.08,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          SizedBox(height: isCompact ? 10 : 14),
+          Text(
+            item.description,
+            style: TextStyle(
+              color: Color(0xFF6C5A48),
+              fontSize: isCompact ? 14 : 16,
+              height: 1.4,
+              fontWeight: FontWeight.w500,
             ),
           ),
         ],
@@ -491,10 +1495,48 @@ class _BagPageState extends State<BagPage> {
   }
 }
 
+class _BagStoryImage extends StatelessWidget {
+  final String imagePath;
+
+  const _BagStoryImage({required this.imagePath});
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(18),
+      child: Image.asset(
+        imagePath,
+        fit: BoxFit.cover,
+        height: double.infinity,
+        width: double.infinity,
+      ),
+    );
+  }
+}
+
+class _BagStory {
+  final String title;
+  final String description;
+  final String imagePath;
+
+  const _BagStory({
+    required this.title,
+    required this.description,
+    required this.imagePath,
+  });
+}
+
 class NewArrivalSection extends StatefulWidget {
   final ValueChanged<ArrivalBag> onBuyNow;
+  final ValueChanged<ArrivalBag> onToggleFavorite;
+  final bool Function(String bagName) isFavorite;
 
-  const NewArrivalSection({super.key, required this.onBuyNow});
+  const NewArrivalSection({
+    super.key,
+    required this.onBuyNow,
+    required this.onToggleFavorite,
+    required this.isFavorite,
+  });
 
   @override
   State<NewArrivalSection> createState() => _NewArrivalSectionState();
@@ -571,6 +1613,102 @@ class _NewArrivalSectionState extends State<NewArrivalSection> {
       material: 'Vegan Leather',
       color: 'Dark Mocha',
     ),
+    ArrivalBag(
+      name: 'Aria',
+      imagePath: 'assets/bag9.jpg',
+      price: 235,
+      category: 'Crossbody Bag',
+      material: 'Faux Leather',
+      color: 'Sand Beige',
+    ),
+    ArrivalBag(
+      name: 'Nova',
+      imagePath: 'assets/bag10.jpg',
+      price: 280,
+      category: 'Shoulder Bag',
+      material: 'Premium PU',
+      color: 'Deep Cocoa',
+    ),
+    ArrivalBag(
+      name: 'Luna',
+      imagePath: 'assets/bag11.jpg',
+      price: 215,
+      category: 'Satchel',
+      material: 'Soft Grain Leather',
+      color: 'Ivory Cream',
+    ),
+    ArrivalBag(
+      name: 'Skye',
+      imagePath: 'assets/bag12.jpg',
+      price: 248,
+      category: 'Top Handle Bag',
+      material: 'Vegan Leather',
+      color: 'Toffee Brown',
+    ),
+    ArrivalBag(
+      name: 'Mira',
+      imagePath: 'assets/bag13.jpg',
+      price: 265,
+      category: 'Handbag',
+      material: 'PU Leather',
+      color: 'Olive Taupe',
+    ),
+    ArrivalBag(
+      name: 'Selene',
+      imagePath: 'assets/bag14.jpg',
+      price: 225,
+      category: 'Mini Bag',
+      material: 'Premium Synthetic',
+      color: 'Dusty Rose',
+    ),
+    ArrivalBag(
+      name: 'Nyla',
+      imagePath: 'assets/bag15.jpg',
+      price: 255,
+      category: 'Tote Bag',
+      material: 'Canvas Leather Mix',
+      color: 'Walnut Tan',
+    ),
+    ArrivalBag(
+      name: 'Faye',
+      imagePath: 'assets/bag16.jpg',
+      price: 238,
+      category: 'Bowling Bag',
+      material: 'Faux Leather',
+      color: 'Mocha Nude',
+    ),
+    ArrivalBag(
+      name: 'Clara',
+      imagePath: 'assets/bag17.jpg',
+      price: 272,
+      category: 'Shoulder Bag',
+      material: 'Premium PU',
+      color: 'Espresso',
+    ),
+    ArrivalBag(
+      name: 'Isla',
+      imagePath: 'assets/bag18.jpg',
+      price: 242,
+      category: 'Crossbody Bag',
+      material: 'Vegan Leather',
+      color: 'Warm Beige',
+    ),
+    ArrivalBag(
+      name: 'Vera',
+      imagePath: 'assets/bag19.jpg',
+      price: 288,
+      category: 'Top Handle Bag',
+      material: 'Soft Grain Leather',
+      color: 'Rich Caramel',
+    ),
+    ArrivalBag(
+      name: 'Hazel',
+      imagePath: 'assets/bag20.jpg',
+      price: 260,
+      category: 'Satchel',
+      material: 'Premium Synthetic',
+      color: 'Chocolate Brown',
+    ),
   ];
 
   @override
@@ -612,9 +1750,12 @@ class _NewArrivalSectionState extends State<NewArrivalSection> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: const [
+          const Wrap(
+            alignment: WrapAlignment.center,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 16,
+            runSpacing: 6,
+            children: [
               Text(
                 "Bloggers' Choice",
                 style: TextStyle(
@@ -622,7 +1763,6 @@ class _NewArrivalSectionState extends State<NewArrivalSection> {
                   fontWeight: FontWeight.w600,
                 ),
               ),
-              SizedBox(width: 16),
               Text(
                 "NEW ARRIVALS",
                 style: TextStyle(
@@ -632,7 +1772,6 @@ class _NewArrivalSectionState extends State<NewArrivalSection> {
                   letterSpacing: 1,
                 ),
               ),
-              SizedBox(width: 16),
               Text(
                 "Bestsellers",
                 style: TextStyle(
@@ -661,6 +1800,8 @@ class _NewArrivalSectionState extends State<NewArrivalSection> {
                     itemBuilder: (context, index) => ArrivalBagCard(
                       item: _items[index],
                       onBuyNow: () => widget.onBuyNow(_items[index]),
+                      onToggleFavorite: widget.onToggleFavorite,
+                      isFavorite: widget.isFavorite(_items[index].name),
                     ),
                   ),
                 ),
@@ -673,130 +1814,6 @@ class _NewArrivalSectionState extends State<NewArrivalSection> {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class ArrivalBagCard extends StatelessWidget {
-  final ArrivalBag item;
-  final VoidCallback onBuyNow;
-
-  const ArrivalBagCard({super.key, required this.item, required this.onBuyNow});
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 240,
-      child: GlassCard(
-        borderRadius: BorderRadius.circular(24),
-        tint: const Color(0x88D9C7BB),
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.55),
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: const Text(
-                'ECO',
-                style: TextStyle(
-                  color: Color(0xFF5D4037),
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Expanded(
-              child: Center(
-                child: Image.asset(item.imagePath, fit: BoxFit.contain),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              item.name,
-              style: const TextStyle(
-                color: Color(0xFF3E2723),
-                fontSize: 22,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              'Price: \$${item.price}',
-              style: const TextStyle(
-                color: Color(0xFF4E342E),
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            Text(
-              'Category: ${item.category}',
-              style: const TextStyle(
-                color: Color(0xFF4E342E),
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            Text(
-              'Material: ${item.material}',
-              style: const TextStyle(
-                color: Color(0xFF4E342E),
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            Text(
-              'Color: ${item.color}',
-              style: const TextStyle(
-                color: Color(0xFF4E342E),
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 10),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: onBuyNow,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFF8EFE8),
-                  foregroundColor: const Color(0xFF5D4037),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                ),
-                child: const Text(
-                  'Buy Now',
-                  style: TextStyle(fontWeight: FontWeight.w700),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _ArrowCircle extends StatelessWidget {
-  final IconData icon;
-  final VoidCallback onTap;
-
-  const _ArrowCircle({required this.icon, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(24),
-      child: Container(
-        height: 48,
-        width: 48,
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.35),
-          shape: BoxShape.circle,
-        ),
-        child: Icon(icon, color: const Color(0xFF5D4037)),
       ),
     );
   }
@@ -820,9 +1837,216 @@ class ArrivalBag {
   });
 }
 
+class ArrivalBagCard extends StatefulWidget {
+  final ArrivalBag item;
+  final VoidCallback onBuyNow;
+  final ValueChanged<ArrivalBag> onToggleFavorite;
+  final bool isFavorite;
+
+  const ArrivalBagCard({
+    super.key,
+    required this.item,
+    required this.onBuyNow,
+    required this.onToggleFavorite,
+    required this.isFavorite,
+  });
+
+  @override
+  State<ArrivalBagCard> createState() => _ArrivalBagCardState();
+}
+
+class _ArrivalBagCardState extends State<ArrivalBagCard> {
+  bool _isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 220),
+        curve: Curves.easeOut,
+        transform: Matrix4.identity()..translate(0.0, _isHovered ? -6.0 : 0.0),
+        child: AnimatedScale(
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeOut,
+          scale: _isHovered ? 1.015 : 1,
+          child: SizedBox(
+            width: 240,
+            child: GlassCard(
+              borderRadius: BorderRadius.circular(24),
+              tint: _isHovered
+                  ? const Color(0xA3E4D6CC)
+                  : const Color(0x88D9C7BB),
+              padding: const EdgeInsets.all(14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 220),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: _isHovered
+                              ? Colors.white.withOpacity(0.72)
+                              : Colors.white.withOpacity(0.55),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: const Text(
+                          'ECO',
+                          style: TextStyle(
+                            color: Color(0xFF5D4037),
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () {
+                          widget.onToggleFavorite(widget.item);
+                        },
+                        iconSize: 22,
+                        visualDensity: VisualDensity.compact,
+                        icon: Icon(
+                          widget.isFavorite
+                              ? Icons.favorite
+                              : Icons.favorite_border,
+                          color: widget.isFavorite
+                              ? const Color.fromARGB(255, 95, 8, 53)
+                              : const Color(0xFF6C5A48),
+                        ),
+                        tooltip: 'Favorite',
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Expanded(
+                    child: Center(
+                      child: AnimatedScale(
+                        duration: const Duration(milliseconds: 250),
+                        curve: Curves.easeOut,
+                        scale: _isHovered ? 1.05 : 1,
+                        child: Image.asset(
+                          widget.item.imagePath,
+                          fit: BoxFit.contain,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    widget.item.name,
+                    style: const TextStyle(
+                      color: Color(0xFF3E2723),
+                      fontSize: 22,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Price: \$${widget.item.price}',
+                    style: const TextStyle(
+                      color: Color(0xFF4E342E),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  Text(
+                    'Category: ${widget.item.category}',
+                    style: const TextStyle(
+                      color: Color(0xFF4E342E),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  Text(
+                    'Material: ${widget.item.material}',
+                    style: const TextStyle(
+                      color: Color(0xFF4E342E),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  Text(
+                    'Color: ${widget.item.color}',
+                    style: const TextStyle(
+                      color: Color(0xFF4E342E),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: widget.onBuyNow,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFF8EFE8),
+                        foregroundColor: const Color(0xFF5D4037),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      child: const Text(
+                        'Buy Now',
+                        style: TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ArrowCircle extends StatefulWidget {
+  final IconData icon;
+  final VoidCallback onTap;
+
+  const _ArrowCircle({required this.icon, required this.onTap});
+
+  @override
+  State<_ArrowCircle> createState() => _ArrowCircleState();
+}
+
+class _ArrowCircleState extends State<_ArrowCircle> {
+  bool _isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      child: InkWell(
+        onTap: widget.onTap,
+        borderRadius: BorderRadius.circular(24),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOut,
+          transform: Matrix4.identity()..scale(_isHovered ? 1.08 : 1.0),
+          height: 48,
+          width: 48,
+          decoration: BoxDecoration(
+            color: _isHovered
+                ? Colors.white.withOpacity(0.58)
+                : Colors.white.withOpacity(0.35),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(widget.icon, color: const Color(0xFF5D4037)),
+        ),
+      ),
+    );
+  }
+}
+
 class SmallProductCard extends StatelessWidget {
   final String name;
   final Color color;
+
   const SmallProductCard({super.key, required this.name, required this.color});
 
   @override
