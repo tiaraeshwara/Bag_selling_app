@@ -2002,6 +2002,7 @@ class _BagPageState extends State<BagPage> {
         final double pagePadding = isCompactPage ? 14 : 30;
         final double heroHeight = isCompactPage ? 320 : 500;
         final bool showLeftFilters = pageConstraints.maxWidth >= 1080;
+        final double filterTopOffset = showLeftFilters ? 126 : 0;
         final double topSectionMaxHeight = heroHeight + 150;
 
         final Widget topContent = Column(
@@ -2238,14 +2239,17 @@ class _BagPageState extends State<BagPage> {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  SizedBox(
-                    width: 252,
-                    child: ConstrainedBox(
-                      constraints: BoxConstraints(
-                        maxHeight: topSectionMaxHeight,
-                      ),
-                      child: SingleChildScrollView(
-                        child: const FiltersSidebar(),
+                  Padding(
+                    padding: EdgeInsets.only(top: filterTopOffset),
+                    child: SizedBox(
+                      width: 252,
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          maxHeight: topSectionMaxHeight - filterTopOffset,
+                        ),
+                        child: SingleChildScrollView(
+                          child: const FiltersSidebar(),
+                        ),
                       ),
                     ),
                   ),
