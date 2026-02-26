@@ -33,7 +33,413 @@ class ElegantCosmeticApp extends StatelessWidget {
           ),
         ),
       ),
-      home: const MainNavigationLayout(),
+      home: const AuthGateway(),
+    );
+  }
+}
+
+class AuthGateway extends StatefulWidget {
+  const AuthGateway({super.key});
+
+  @override
+  State<AuthGateway> createState() => _AuthGatewayState();
+}
+
+class _AuthGatewayState extends State<AuthGateway> {
+  bool _isAuthenticated = false;
+
+  void _onAuthenticated() {
+    setState(() {
+      _isAuthenticated = true;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_isAuthenticated) {
+      return const MainNavigationLayout();
+    }
+
+    return AuthSection(onAuthenticated: _onAuthenticated);
+  }
+}
+
+class AuthSection extends StatefulWidget {
+  final VoidCallback onAuthenticated;
+
+  const AuthSection({super.key, required this.onAuthenticated});
+
+  @override
+  State<AuthSection> createState() => _AuthSectionState();
+}
+
+class _AuthSectionState extends State<AuthSection> {
+  final GlobalKey<FormState> _loginFormKey = GlobalKey<FormState>();
+  final GlobalKey<FormState> _signupFormKey = GlobalKey<FormState>();
+
+  final TextEditingController _loginUsernameController =
+      TextEditingController();
+  final TextEditingController _loginPasswordController =
+      TextEditingController();
+
+  final TextEditingController _firstNameController = TextEditingController();
+  final TextEditingController _lastNameController = TextEditingController();
+  final TextEditingController _signupUsernameController =
+      TextEditingController();
+  final TextEditingController _signupPasswordController =
+      TextEditingController();
+  final TextEditingController _reEnterPasswordController =
+      TextEditingController();
+
+  @override
+  void dispose() {
+    _loginUsernameController.dispose();
+    _loginPasswordController.dispose();
+    _firstNameController.dispose();
+    _lastNameController.dispose();
+    _signupUsernameController.dispose();
+    _signupPasswordController.dispose();
+    _reEnterPasswordController.dispose();
+    super.dispose();
+  }
+
+  void _handleLogin() {
+    if (!(_loginFormKey.currentState?.validate() ?? false)) {
+      return;
+    }
+
+    widget.onAuthenticated();
+  }
+
+  void _handleSignup() {
+    if (!(_signupFormKey.currentState?.validate() ?? false)) {
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Signup successful. You are now logged in.'),
+      ),
+    );
+    widget.onAuthenticated();
+  }
+
+  Future<void> _handleForgotPassword() async {
+    final TextEditingController forgotController = TextEditingController(
+      text: _loginUsernameController.text.trim(),
+    );
+
+    final bool? sent = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          child: GlassCard(
+            borderRadius: BorderRadius.circular(22),
+            tint: Colors.white.withOpacity(0.20),
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Forgot Password',
+                  style: TextStyle(
+                    color: Color(0xFF3E2723),
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: forgotController,
+                  decoration: const InputDecoration(
+                    labelText: 'Username',
+                    hintText: 'Enter your username',
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context, false),
+                      child: const Text('Cancel'),
+                    ),
+                    const SizedBox(width: 8),
+                    ElevatedButton(
+                      onPressed: () {
+                        if (forgotController.text.trim().isEmpty) {
+                          return;
+                        }
+                        Navigator.pop(context, true);
+                      },
+                      child: const Text('Send'),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+
+    if (sent == true && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Password reset instructions sent for ${forgotController.text.trim()}.',
+          ),
+        ),
+      );
+    }
+
+    forgotController.dispose();
+  }
+
+  String? _requiredValidator(String? value, String field) {
+    if (value == null || value.trim().isEmpty) {
+      return '$field is required';
+    }
+    return null;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFFF1E8E1), Color(0xFFE2D2C6), Color(0xFFD3C2B8)],
+          ),
+        ),
+        child: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 520),
+                child: GlassCard(
+                  borderRadius: BorderRadius.circular(30),
+                  tint: Colors.white.withOpacity(0.24),
+                  padding: const EdgeInsets.all(20),
+                  child: DefaultTabController(
+                    length: 2,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Welcome',
+                          style: TextStyle(
+                            color: Color(0xFF2F241F),
+                            fontSize: 30,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        const Text(
+                          'Login or create your account to continue.',
+                          style: TextStyle(
+                            color: Color(0xFF6C5A48),
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.30),
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: const TabBar(
+                            indicatorSize: TabBarIndicatorSize.tab,
+                            indicator: BoxDecoration(
+                              color: Color(0xFF6C5A48),
+                              borderRadius: BorderRadius.all(
+                                Radius.circular(12),
+                              ),
+                            ),
+                            labelColor: Color(0xFFF7F2E9),
+                            unselectedLabelColor: Color(0xFF6C5A48),
+                            tabs: [
+                              Tab(text: 'Login'),
+                              Tab(text: 'Sign Up'),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                        SizedBox(
+                          height: 420,
+                          child: TabBarView(
+                            children: [
+                              Form(
+                                key: _loginFormKey,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    TextFormField(
+                                      controller: _loginUsernameController,
+                                      decoration: const InputDecoration(
+                                        labelText: 'User Name',
+                                      ),
+                                      validator: (value) => _requiredValidator(
+                                        value,
+                                        'User Name',
+                                      ),
+                                    ),
+                                    const SizedBox(height: 12),
+                                    TextFormField(
+                                      controller: _loginPasswordController,
+                                      obscureText: true,
+                                      decoration: const InputDecoration(
+                                        labelText: 'Password',
+                                      ),
+                                      validator: (value) =>
+                                          _requiredValidator(value, 'Password'),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Align(
+                                      alignment: Alignment.centerRight,
+                                      child: TextButton(
+                                        onPressed: _handleForgotPassword,
+                                        child: const Text('Forgot Password?'),
+                                      ),
+                                    ),
+                                    const Spacer(),
+                                    SizedBox(
+                                      width: double.infinity,
+                                      child: ElevatedButton(
+                                        onPressed: _handleLogin,
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: const Color(
+                                            0xFFF8EFE8,
+                                          ),
+                                          foregroundColor: const Color(
+                                            0xFF5D4037,
+                                          ),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              14,
+                                            ),
+                                          ),
+                                        ),
+                                        child: const Text(
+                                          'Login',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Form(
+                                key: _signupFormKey,
+                                child: Column(
+                                  children: [
+                                    TextFormField(
+                                      controller: _firstNameController,
+                                      decoration: const InputDecoration(
+                                        labelText: 'First Name',
+                                      ),
+                                      validator: (value) => _requiredValidator(
+                                        value,
+                                        'First Name',
+                                      ),
+                                    ),
+                                    const SizedBox(height: 10),
+                                    TextFormField(
+                                      controller: _lastNameController,
+                                      decoration: const InputDecoration(
+                                        labelText: 'Last Name',
+                                      ),
+                                      validator: (value) => _requiredValidator(
+                                        value,
+                                        'Last Name',
+                                      ),
+                                    ),
+                                    const SizedBox(height: 10),
+                                    TextFormField(
+                                      controller: _signupUsernameController,
+                                      decoration: const InputDecoration(
+                                        labelText: 'Username',
+                                      ),
+                                      validator: (value) =>
+                                          _requiredValidator(value, 'Username'),
+                                    ),
+                                    const SizedBox(height: 10),
+                                    TextFormField(
+                                      controller: _signupPasswordController,
+                                      obscureText: true,
+                                      decoration: const InputDecoration(
+                                        labelText: 'Password',
+                                      ),
+                                      validator: (value) =>
+                                          _requiredValidator(value, 'Password'),
+                                    ),
+                                    const SizedBox(height: 10),
+                                    TextFormField(
+                                      controller: _reEnterPasswordController,
+                                      obscureText: true,
+                                      decoration: const InputDecoration(
+                                        labelText: 'Re-enter Password',
+                                      ),
+                                      validator: (value) {
+                                        if (value == null || value.isEmpty) {
+                                          return 'Re-enter Password is required';
+                                        }
+                                        if (value !=
+                                            _signupPasswordController.text) {
+                                          return 'Passwords do not match';
+                                        }
+                                        return null;
+                                      },
+                                    ),
+                                    const Spacer(),
+                                    SizedBox(
+                                      width: double.infinity,
+                                      child: ElevatedButton(
+                                        onPressed: _handleSignup,
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: const Color(
+                                            0xFFF8EFE8,
+                                          ),
+                                          foregroundColor: const Color(
+                                            0xFF5D4037,
+                                          ),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              14,
+                                            ),
+                                          ),
+                                        ),
+                                        child: const Text(
+                                          'Sign Up',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
