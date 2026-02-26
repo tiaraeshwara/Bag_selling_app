@@ -792,15 +792,7 @@ class _MainNavigationLayoutState extends State<MainNavigationLayout> {
                             children: [
                               const Padding(
                                 padding: EdgeInsets.only(left: 4),
-                                child: Text(
-                                  'TIVRA',
-                                  style: TextStyle(
-                                    color: Color(0xFF2F241F),
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w800,
-                                    letterSpacing: 0.7,
-                                  ),
-                                ),
+                                child: _NavBrandWordmark(isCompact: true),
                               ),
                               const Spacer(),
                               IconButton(
@@ -858,15 +850,7 @@ class _MainNavigationLayoutState extends State<MainNavigationLayout> {
                           children: [
                             const Padding(
                               padding: EdgeInsets.only(left: 4, right: 14),
-                              child: Text(
-                                'TIVRA',
-                                style: TextStyle(
-                                  color: Color(0xFF2F241F),
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.w800,
-                                  letterSpacing: 1.0,
-                                ),
-                              ),
+                              child: _NavBrandWordmark(isCompact: false),
                             ),
                             Expanded(
                               child: Wrap(
@@ -993,6 +977,46 @@ class _TopNavTextItem extends StatefulWidget {
 
   @override
   State<_TopNavTextItem> createState() => _TopNavTextItemState();
+}
+
+class _NavBrandWordmark extends StatelessWidget {
+  final bool isCompact;
+
+  const _NavBrandWordmark({required this.isCompact});
+
+  @override
+  Widget build(BuildContext context) {
+    final double titleSize = isCompact ? 17 : 22;
+    final double subtitleSize = isCompact ? 8 : 9;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'TIVRA',
+          style: GoogleFonts.cinzel(
+            color: const Color(0xFF3A2A22),
+            fontSize: titleSize,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 1.4,
+            height: 1.0,
+          ),
+        ),
+        Text(
+          'atelier',
+          style: GoogleFonts.cormorantGaramond(
+            color: const Color(0xFF7D5A44),
+            fontSize: subtitleSize,
+            fontStyle: FontStyle.italic,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 1.2,
+            height: 1.0,
+          ),
+        ),
+      ],
+    );
+  }
 }
 
 class _TopNavTextItemState extends State<_TopNavTextItem> {
@@ -1317,12 +1341,12 @@ class _ElegantBrandHeaderState extends State<ElegantBrandHeader>
                       children: [
                         Text(
                           'TIVRA',
-                          style: GoogleFonts.playfairDisplay(
+                          style: GoogleFonts.cinzel(
                             fontSize: brandFontSize,
-                            fontWeight: FontWeight.w900,
+                            fontWeight: FontWeight.w700,
                             color: Colors.white,
                             height: 0.95,
-                            letterSpacing: 1.8,
+                            letterSpacing: 2.1,
                           ),
                         ),
                         Text(
@@ -2002,7 +2026,7 @@ class _BagPageState extends State<BagPage> {
         final double pagePadding = isCompactPage ? 14 : 30;
         final double heroHeight = isCompactPage ? 320 : 500;
         final bool showLeftFilters = pageConstraints.maxWidth >= 1080;
-        final double filterTopOffset = showLeftFilters ? 126 : 0;
+        final double filterTopOffset = showLeftFilters ? 96 : 0;
         final double topSectionMaxHeight = heroHeight + 150;
 
         final Widget topContent = Column(
@@ -2105,7 +2129,10 @@ class _BagPageState extends State<BagPage> {
                     ? Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          ElegantBrandHeader(isCompact: isCompact),
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: ElegantBrandHeader(isCompact: isCompact),
+                          ),
                           const SizedBox(height: 12),
                           Row(
                             children: [
@@ -2118,9 +2145,13 @@ class _BagPageState extends State<BagPage> {
                       )
                     : Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          ElegantBrandHeader(isCompact: isCompact),
+                          Expanded(
+                            child: Align(
+                              alignment: Alignment.centerLeft,
+                              child: ElegantBrandHeader(isCompact: isCompact),
+                            ),
+                          ),
                           Row(
                             children: [
                               SizedBox(width: 210, child: searchField),
@@ -2236,25 +2267,23 @@ class _BagPageState extends State<BagPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              Stack(
+                clipBehavior: Clip.none,
                 children: [
-                  Padding(
-                    padding: EdgeInsets.only(top: filterTopOffset),
-                    child: SizedBox(
-                      width: 252,
-                      child: ConstrainedBox(
-                        constraints: BoxConstraints(
-                          maxHeight: topSectionMaxHeight - filterTopOffset,
-                        ),
-                        child: SingleChildScrollView(
-                          child: const FiltersSidebar(),
-                        ),
+                  topContent,
+                  Positioned(
+                    left: 0,
+                    top: filterTopOffset,
+                    width: 252,
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxHeight: topSectionMaxHeight - filterTopOffset,
+                      ),
+                      child: SingleChildScrollView(
+                        child: const FiltersSidebar(),
                       ),
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(child: topContent),
                 ],
               ),
               const SizedBox(height: 30),
