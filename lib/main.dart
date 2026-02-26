@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() => runApp(const ElegantCosmeticApp());
 
@@ -46,34 +47,224 @@ class AuthGateway extends StatefulWidget {
 }
 
 class _AuthGatewayState extends State<AuthGateway> {
-  bool _isAuthenticated = false;
+  static const String _isLoggedInKey = 'is_logged_in';
+  static const String _currentUsernameKey = 'current_username';
+  static const String _savedFirstNameKey = 'saved_first_name';
+  static const String _savedLastNameKey = 'saved_last_name';
+  static const String _savedUsernameKey = 'saved_username';
+  static const String _savedPasswordKey = 'saved_password';
 
-  void _onAuthenticated() {
+  bool _isLoading = true;
+  bool _isAuthenticated = false;
+  String? _currentUsername;
+  String? _savedFirstName;
+  String? _savedLastName;
+  String? _savedUsername;
+  String? _savedPassword;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAuthState();
+  }
+
+  Future<void> _loadAuthState() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    if (!mounted) return;
+
+    setState(() {
+      _isAuthenticated = prefs.getBool(_isLoggedInKey) ?? false;
+      _currentUsername = prefs.getString(_currentUsernameKey);
+      _savedFirstName = prefs.getString(_savedFirstNameKey);
+      _savedLastName = prefs.getString(_savedLastNameKey);
+      _savedUsername = prefs.getString(_savedUsernameKey);
+      _savedPassword = prefs.getString(_savedPasswordKey);
+      _isLoading = false;
+    });
+  }
+
+  Future<void> _onLogin(String username, String password) async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_isLoggedInKey, true);
+    await prefs.setString(_currentUsernameKey, username);
+
+    if (!mounted) return;
+
     setState(() {
       _isAuthenticated = true;
+      _currentUsername = username;
+      _savedUsername ??= username;
+      _savedPassword ??= password;
     });
+  }
+
+  Future<void> _onSignup({
+    required String firstName,
+    required String lastName,
+    required String username,
+    required String password,
+  }) async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_savedFirstNameKey, firstName);
+    await prefs.setString(_savedLastNameKey, lastName);
+    await prefs.setString(_savedUsernameKey, username);
+    await prefs.setString(_savedPasswordKey, password);
+    await prefs.setBool(_isLoggedInKey, true);
+    await prefs.setString(_currentUsernameKey, username);
+
+    if (!mounted) return;
+
+    setState(() {
+      _savedFirstName = firstName;
+      _savedLastName = lastName;
+      _savedUsername = username;
+      _savedPassword = password;
+      _isAuthenticated = true;
+      _currentUsername = username;
+    });
+  }
+
+  Future<void> _logout() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_isLoggedInKey, false);
+    await prefs.remove(_currentUsernameKey);
+
+    if (!mounted) return;
+
+    setState(() {
+      _isAuthenticated = false;
+      _currentUsername = null;
+    });
+  }
+
+  Future<void> _openAuthFromTopIcon() async {
+    if (_isAuthenticated) {
+      await showDialog<void>(
+        context: context,
+        builder: (dialogContext) {
+          return Dialog(
+            backgroundColor: Colors.transparent,
+            child: GlassCard(
+              borderRadius: BorderRadius.circular(24),
+              tint: Colors.white.withOpacity(0.20),
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Account',
+                    style: TextStyle(
+                      color: Color(0xFF3E2723),
+                      fontSize: 22,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Logged in as ${_currentUsername ?? _savedUsername ?? 'User'}',
+                    style: const TextStyle(
+                      color: Color(0xFF5D4037),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(dialogContext),
+                        child: const Text('Close'),
+                      ),
+                      const SizedBox(width: 8),
+                      ElevatedButton(
+                        onPressed: () async {
+                          Navigator.pop(dialogContext);
+                          await _logout();
+                        },
+                        child: const Text('Logout'),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      );
+      return;
+    }
+
+    if (!mounted) return;
+
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => AuthSection(
+          savedFirstName: _savedFirstName,
+          savedLastName: _savedLastName,
+          savedUsername: _savedUsername,
+          savedPassword: _savedPassword,
+          onLogin: _onLogin,
+          onSignup: _onSignup,
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_isAuthenticated) {
-      return const MainNavigationLayout();
+    if (_isLoading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
-    return AuthSection(onAuthenticated: _onAuthenticated);
+    return MainNavigationLayout(
+      onAuthPressed: _openAuthFromTopIcon,
+      isAuthenticated: _isAuthenticated,
+      currentUsername: _currentUsername ?? _savedUsername,
+    );
   }
 }
 
 class AuthSection extends StatefulWidget {
-  final VoidCallback onAuthenticated;
+  final String? savedFirstName;
+  final String? savedLastName;
+  final String? savedUsername;
+  final String? savedPassword;
+  final Future<void> Function(String username, String password) onLogin;
+  final Future<void> Function({
+    required String firstName,
+    required String lastName,
+    required String username,
+    required String password,
+  })
+  onSignup;
 
-  const AuthSection({super.key, required this.onAuthenticated});
+  const AuthSection({
+    super.key,
+    required this.onLogin,
+    required this.onSignup,
+    this.savedFirstName,
+    this.savedLastName,
+    this.savedUsername,
+    this.savedPassword,
+  });
 
   @override
   State<AuthSection> createState() => _AuthSectionState();
 }
 
 class _AuthSectionState extends State<AuthSection> {
+  @override
+  void initState() {
+    super.initState();
+    _loginUsernameController.text = widget.savedUsername ?? '';
+    _loginPasswordController.text = widget.savedPassword ?? '';
+    _firstNameController.text = widget.savedFirstName ?? '';
+    _lastNameController.text = widget.savedLastName ?? '';
+    _signupUsernameController.text = widget.savedUsername ?? '';
+  }
+
   final GlobalKey<FormState> _loginFormKey = GlobalKey<FormState>();
   final GlobalKey<FormState> _signupFormKey = GlobalKey<FormState>();
 
@@ -103,25 +294,47 @@ class _AuthSectionState extends State<AuthSection> {
     super.dispose();
   }
 
-  void _handleLogin() {
+  Future<void> _handleLogin() async {
     if (!(_loginFormKey.currentState?.validate() ?? false)) {
       return;
     }
 
-    widget.onAuthenticated();
+    final String username = _loginUsernameController.text.trim();
+    final String password = _loginPasswordController.text.trim();
+
+    if ((widget.savedUsername?.isNotEmpty ?? false) &&
+        (widget.savedPassword?.isNotEmpty ?? false) &&
+        (username != widget.savedUsername ||
+            password != widget.savedPassword)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Invalid username or password.')),
+      );
+      return;
+    }
+
+    await widget.onLogin(username, password);
+    if (mounted) Navigator.pop(context);
   }
 
-  void _handleSignup() {
+  Future<void> _handleSignup() async {
     if (!(_signupFormKey.currentState?.validate() ?? false)) {
       return;
     }
+
+    await widget.onSignup(
+      firstName: _firstNameController.text.trim(),
+      lastName: _lastNameController.text.trim(),
+      username: _signupUsernameController.text.trim(),
+      password: _signupPasswordController.text.trim(),
+    );
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Signup successful. You are now logged in.'),
       ),
     );
-    widget.onAuthenticated();
+
+    if (mounted) Navigator.pop(context);
   }
 
   Future<void> _handleForgotPassword() async {
@@ -280,6 +493,20 @@ class _AuthSectionState extends State<AuthSection> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
+                                    if ((widget.savedUsername?.isNotEmpty ??
+                                        false))
+                                      Padding(
+                                        padding: const EdgeInsets.only(
+                                          bottom: 8,
+                                        ),
+                                        child: Text(
+                                          'Signed up username: ${widget.savedUsername}',
+                                          style: const TextStyle(
+                                            color: Color(0xFF6C5A48),
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ),
                                     TextFormField(
                                       controller: _loginUsernameController,
                                       decoration: const InputDecoration(
@@ -445,7 +672,16 @@ class _AuthSectionState extends State<AuthSection> {
 }
 
 class MainNavigationLayout extends StatefulWidget {
-  const MainNavigationLayout({super.key});
+  final VoidCallback onAuthPressed;
+  final bool isAuthenticated;
+  final String? currentUsername;
+
+  const MainNavigationLayout({
+    super.key,
+    required this.onAuthPressed,
+    required this.isAuthenticated,
+    this.currentUsername,
+  });
 
   @override
   State<MainNavigationLayout> createState() => _MainNavigationLayoutState();
@@ -467,8 +703,13 @@ class _MainNavigationLayoutState extends State<MainNavigationLayout> {
       child: Text("Search Page", style: TextStyle(color: Color(0xFF3E2723))),
     ),
     SavedPage(favoriteItems: _favoriteItems.values.toList(growable: false)),
-    const Center(
-      child: Text("Profile", style: TextStyle(color: Color(0xFF3E2723))),
+    Center(
+      child: Text(
+        widget.isAuthenticated
+            ? 'Profile: ${widget.currentUsername ?? 'User'}'
+            : 'Profile',
+        style: const TextStyle(color: Color(0xFF3E2723)),
+      ),
     ),
   ];
 
@@ -563,17 +804,22 @@ class _MainNavigationLayoutState extends State<MainNavigationLayout> {
                                 tooltip: 'Saved',
                               ),
                               IconButton(
-                                onPressed: () =>
-                                    setState(() => _selectedIndex = 3),
+                                onPressed: widget.onAuthPressed,
                                 iconSize: 22,
                                 padding: EdgeInsets.zero,
                                 constraints: const BoxConstraints.tightFor(
                                   width: 34,
                                   height: 34,
                                 ),
-                                icon: const Icon(Icons.person_outline),
+                                icon: Icon(
+                                  widget.isAuthenticated
+                                      ? Icons.verified_user_outlined
+                                      : Icons.login,
+                                ),
                                 color: const Color(0xFF6C5A48),
-                                tooltip: 'Profile',
+                                tooltip: widget.isAuthenticated
+                                    ? 'Account'
+                                    : 'Login / Signup',
                               ),
                             ],
                           ),
@@ -629,12 +875,34 @@ class _MainNavigationLayoutState extends State<MainNavigationLayout> {
                               ),
                             ),
                             const SizedBox(width: 10),
+                            if (widget.isAuthenticated)
+                              SizedBox(
+                                width: 110,
+                                child: Text(
+                                  widget.currentUsername ?? 'User',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  textAlign: TextAlign.right,
+                                  style: const TextStyle(
+                                    color: Color(0xFF5D4037),
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            if (widget.isAuthenticated)
+                              const SizedBox(width: 6),
                             IconButton(
-                              onPressed: () =>
-                                  setState(() => _selectedIndex = 3),
-                              icon: const Icon(Icons.person_outline),
+                              onPressed: widget.onAuthPressed,
+                              icon: Icon(
+                                widget.isAuthenticated
+                                    ? Icons.verified_user_outlined
+                                    : Icons.login,
+                              ),
                               color: const Color(0xFF6C5A48),
-                              tooltip: 'Profile',
+                              tooltip: widget.isAuthenticated
+                                  ? 'Account'
+                                  : 'Login / Signup',
                             ),
                             IconButton(
                               onPressed: () =>
@@ -1495,8 +1763,9 @@ class _BagPageState extends State<BagPage> {
         final double pagePadding = isCompactPage ? 14 : 30;
         final double heroHeight = isCompactPage ? 320 : 500;
         final bool showLeftFilters = pageConstraints.maxWidth >= 1080;
+        final double topSectionMaxHeight = heroHeight + 150;
 
-        final Widget mainContent = Column(
+        final Widget topContent = Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             LayoutBuilder(
@@ -1664,7 +1933,6 @@ class _BagPageState extends State<BagPage> {
               },
             ),
             const SizedBox(height: 20),
-
             ClipRRect(
               borderRadius: BorderRadius.circular(30),
               child: Container(
@@ -1690,8 +1958,12 @@ class _BagPageState extends State<BagPage> {
                 ),
               ),
             ),
-            const SizedBox(height: 30),
+          ],
+        );
 
+        final Widget bottomContent = Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
             const Wrap(
               alignment: WrapAlignment.spaceBetween,
               spacing: 12,
@@ -1715,7 +1987,6 @@ class _BagPageState extends State<BagPage> {
               ],
             ),
             const SizedBox(height: 20),
-
             KeyedSubtree(
               key: _newArrivalsSectionKey,
               child: NewArrivalSection(
@@ -1724,13 +1995,9 @@ class _BagPageState extends State<BagPage> {
                 isFavorite: widget.isFavorite,
               ),
             ),
-
             const SizedBox(height: 30),
-
             BagDescriptionSection(isCompact: isCompactPage),
-
             const SizedBox(height: 30),
-
             SizedBox(
               height: 150,
               child: ListView(
@@ -1747,18 +2014,43 @@ class _BagPageState extends State<BagPage> {
           ],
         );
 
+        if (!showLeftFilters) {
+          return SingleChildScrollView(
+            padding: EdgeInsets.all(pagePadding),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [topContent, const SizedBox(height: 30), bottomContent],
+            ),
+          );
+        }
+
         return SingleChildScrollView(
           padding: EdgeInsets.all(pagePadding),
-          child: showLeftFilters
-              ? Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(width: 252, child: FiltersSidebar()),
-                    const SizedBox(width: 22),
-                    Expanded(child: mainContent),
-                  ],
-                )
-              : mainContent,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(
+                    width: 252,
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxHeight: topSectionMaxHeight,
+                      ),
+                      child: SingleChildScrollView(
+                        child: const FiltersSidebar(),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(child: topContent),
+                ],
+              ),
+              const SizedBox(height: 30),
+              bottomContent,
+            ],
+          ),
         );
       },
     );
