@@ -4,6 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+class AppPalette {
+  static const Color linen = Color(0xFFF5F1EA);
+  static const Color khaki = Color(0xFFD7C9B8);
+  static const Color camel = Color(0xFFB2967D);
+  static const Color cocoa = Color(0xFF7D5A44);
+  static const Color espresso = Color(0xFF4A342A);
+}
+
 void main() => runApp(const ElegantCosmeticApp());
 
 class ElegantCosmeticApp extends StatelessWidget {
@@ -19,8 +27,20 @@ class ElegantCosmeticApp extends StatelessWidget {
         fontFamily: 'Serif',
         scaffoldBackgroundColor: Colors.transparent,
         colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFFD7B9AB),
-          surface: const Color(0xFFFDFBF9),
+          seedColor: AppPalette.camel,
+          surface: AppPalette.linen,
+          primary: AppPalette.cocoa,
+          secondary: AppPalette.camel,
+        ),
+        textTheme: ThemeData.light().textTheme.apply(
+          bodyColor: AppPalette.espresso,
+          displayColor: AppPalette.espresso,
+        ),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppPalette.linen,
+            foregroundColor: AppPalette.cocoa,
+          ),
         ),
         dialogTheme: const DialogThemeData(
           backgroundColor: Colors.transparent,
@@ -28,7 +48,7 @@ class ElegantCosmeticApp extends StatelessWidget {
         ),
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
-          fillColor: Colors.white.withOpacity(0.35),
+          fillColor: AppPalette.linen.withOpacity(0.50),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide.none,
@@ -462,7 +482,7 @@ class _AuthSectionState extends State<AuthSection> {
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [Color(0xFFF1E8E1), Color(0xFFE2D2C6), Color(0xFFD3C2B8)],
+            colors: [AppPalette.linen, AppPalette.khaki, AppPalette.camel],
           ),
         ),
         child: SafeArea(
@@ -766,7 +786,7 @@ class _MainNavigationLayoutState extends State<MainNavigationLayout> {
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [Color(0xFFF1E8E1), Color(0xFFE2D2C6), Color(0xFFD3C2B8)],
+            colors: [AppPalette.linen, AppPalette.khaki, AppPalette.camel],
           ),
         ),
         child: SafeArea(
@@ -776,7 +796,7 @@ class _MainNavigationLayoutState extends State<MainNavigationLayout> {
                 padding: const EdgeInsets.fromLTRB(10, 4, 10, 2),
                 child: GlassCard(
                   borderRadius: BorderRadius.circular(24),
-                  tint: const Color(0xEAF4F0E8),
+                  tint: AppPalette.linen.withOpacity(0.92),
                   padding: const EdgeInsets.symmetric(
                     horizontal: 8,
                     vertical: 1,
@@ -795,7 +815,7 @@ class _MainNavigationLayoutState extends State<MainNavigationLayout> {
                                 child: Text(
                                   'TIVRA',
                                   style: TextStyle(
-                                    color: Color(0xFF2F241F),
+                                    color: AppPalette.espresso,
                                     fontSize: 15,
                                     fontWeight: FontWeight.w800,
                                     letterSpacing: 0.7,
@@ -812,7 +832,7 @@ class _MainNavigationLayoutState extends State<MainNavigationLayout> {
                                   height: 30,
                                 ),
                                 icon: const Icon(Icons.search),
-                                color: const Color(0xFF6C5A48),
+                                color: AppPalette.cocoa,
                                 tooltip: 'Search',
                               ),
                               IconButton(
@@ -825,7 +845,7 @@ class _MainNavigationLayoutState extends State<MainNavigationLayout> {
                                   height: 30,
                                 ),
                                 icon: const Icon(Icons.favorite_border),
-                                color: const Color(0xFF6C5A48),
+                                color: AppPalette.cocoa,
                                 tooltip: 'Saved',
                               ),
                               IconButton(
@@ -841,7 +861,7 @@ class _MainNavigationLayoutState extends State<MainNavigationLayout> {
                                       ? Icons.verified_user_outlined
                                       : Icons.login,
                                 ),
-                                color: const Color(0xFF6C5A48),
+                                color: AppPalette.cocoa,
                                 tooltip: widget.isAuthenticated
                                     ? 'Account'
                                     : 'Login / Signup',
@@ -861,7 +881,7 @@ class _MainNavigationLayoutState extends State<MainNavigationLayout> {
                               child: Text(
                                 'TIVRA',
                                 style: TextStyle(
-                                  color: Color(0xFF2F241F),
+                                  color: AppPalette.espresso,
                                   fontSize: 20,
                                   fontWeight: FontWeight.w800,
                                   letterSpacing: 1.0,
@@ -909,7 +929,7 @@ class _MainNavigationLayoutState extends State<MainNavigationLayout> {
                                   overflow: TextOverflow.ellipsis,
                                   textAlign: TextAlign.right,
                                   style: const TextStyle(
-                                    color: Color(0xFF5D4037),
+                                    color: AppPalette.cocoa,
                                     fontSize: 11,
                                     fontWeight: FontWeight.w600,
                                   ),
@@ -925,7 +945,7 @@ class _MainNavigationLayoutState extends State<MainNavigationLayout> {
                                     ? Icons.verified_user_outlined
                                     : Icons.login,
                               ),
-                              color: const Color(0xFF6C5A48),
+                              color: AppPalette.cocoa,
                               tooltip: widget.isAuthenticated
                                   ? 'Account'
                                   : 'Login / Signup',
@@ -935,7 +955,7 @@ class _MainNavigationLayoutState extends State<MainNavigationLayout> {
                                   setState(() => _selectedIndex = 2),
                               iconSize: 22,
                               icon: const Icon(Icons.favorite_border),
-                              color: const Color(0xFF6C5A48),
+                              color: AppPalette.cocoa,
                               tooltip: 'Saved',
                             ),
                             IconButton(
@@ -943,7 +963,7 @@ class _MainNavigationLayoutState extends State<MainNavigationLayout> {
                                   setState(() => _selectedIndex = 0),
                               iconSize: 22,
                               icon: const Icon(Icons.shopping_bag_outlined),
-                              color: const Color(0xFF6C5A48),
+                              color: AppPalette.cocoa,
                               tooltip: 'Shop',
                             ),
                           ],
@@ -1018,14 +1038,14 @@ class _TopNavTextItemState extends State<_TopNavTextItem> {
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
             decoration: BoxDecoration(
               color: widget.isSelected
-                  ? const Color(0xFF6C5A48)
+                  ? AppPalette.cocoa
                   : _isHovered
-                  ? const Color(0x336C5A48)
+                  ? AppPalette.camel.withOpacity(0.30)
                   : Colors.transparent,
               borderRadius: BorderRadius.circular(18),
               border: Border.all(
                 color: _isHovered && !widget.isSelected
-                    ? const Color(0x336C5A48)
+                    ? AppPalette.camel.withOpacity(0.35)
                     : Colors.transparent,
                 width: 1,
               ),
@@ -1035,10 +1055,10 @@ class _TopNavTextItemState extends State<_TopNavTextItem> {
               curve: Curves.easeOut,
               style: TextStyle(
                 color: widget.isSelected
-                    ? const Color(0xFFF7F2E9)
+                    ? AppPalette.linen
                     : isActive
-                    ? const Color(0xFF5A4738)
-                    : const Color(0xFF6C5A48),
+                    ? AppPalette.espresso
+                    : AppPalette.cocoa,
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
                 letterSpacing: isActive ? 0.9 : 0.7,
@@ -3499,7 +3519,7 @@ class GlassCard extends StatelessWidget {
     required this.child,
     this.borderRadius = const BorderRadius.all(Radius.circular(20)),
     this.padding = const EdgeInsets.all(12),
-    this.tint = const Color(0x33FFFFFF),
+    this.tint = const Color(0x4DF5F1EA),
   });
 
   @override
@@ -3513,10 +3533,13 @@ class GlassCard extends StatelessWidget {
           decoration: BoxDecoration(
             color: tint,
             borderRadius: borderRadius,
-            border: Border.all(color: Colors.white.withOpacity(0.35), width: 1),
+            border: Border.all(
+              color: AppPalette.khaki.withOpacity(0.50),
+              width: 1,
+            ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.08),
+                color: AppPalette.espresso.withOpacity(0.12),
                 blurRadius: 24,
                 offset: const Offset(0, 10),
               ),
