@@ -1494,264 +1494,271 @@ class _BagPageState extends State<BagPage> {
         final bool isCompactPage = pageConstraints.maxWidth < 700;
         final double pagePadding = isCompactPage ? 14 : 30;
         final double heroHeight = isCompactPage ? 320 : 500;
+        final bool showLeftFilters = pageConstraints.maxWidth >= 1080;
+
+        final Widget mainContent = Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final bool isCompact = constraints.maxWidth < 560;
+
+                final Widget searchField = GlassCard(
+                  borderRadius: BorderRadius.circular(22),
+                  tint: Colors.white.withOpacity(0.22),
+                  padding: const EdgeInsets.all(3),
+                  child: Container(
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.35),
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(color: Colors.white.withOpacity(0.45)),
+                    ),
+                    child: TextField(
+                      readOnly: true,
+                      onTap: openSearchPopupAndGoToNewArrivals,
+                      style: const TextStyle(
+                        color: Color(0xFF4E342E),
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      cursorColor: const Color(0xFF5D4037),
+                      decoration: const InputDecoration(
+                        isDense: true,
+                        contentPadding: EdgeInsets.symmetric(vertical: 10),
+                        hintText: 'Tap to search bags',
+                        hintStyle: TextStyle(
+                          color: Color(0xFF6C5A48),
+                          fontSize: 15,
+                          letterSpacing: 0.3,
+                        ),
+                        prefixIcon: Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 10),
+                          child: Icon(
+                            Icons.search_rounded,
+                            size: 26,
+                            color: Color(0xFF4E342E),
+                          ),
+                        ),
+                        prefixIconConstraints: BoxConstraints(
+                          minWidth: 44,
+                          minHeight: 40,
+                        ),
+                        border: InputBorder.none,
+                      ),
+                    ),
+                  ),
+                );
+
+                final Widget cartButton = Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    GlassCard(
+                      borderRadius: BorderRadius.circular(14),
+                      tint: Colors.white.withOpacity(0.28),
+                      padding: EdgeInsets.zero,
+                      child: IconButton(
+                        onPressed: _showSelectedItemsPopup,
+                        icon: const Icon(
+                          Icons.shopping_bag_outlined,
+                          color: Color(0xFF3E2723),
+                        ),
+                        tooltip: 'Open selected items',
+                      ),
+                    ),
+                    if (_selectedItemCount > 0)
+                      Positioned(
+                        right: -4,
+                        top: -6,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF5D4037),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            '$_selectedItemCount',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                );
+
+                return isCompact
+                    ? Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                "Featured collection",
+                                style: TextStyle(
+                                  color: Colors.brown,
+                                  fontSize: 14,
+                                ),
+                              ),
+                              Text(
+                                "TIVRA\nCollection",
+                                style: TextStyle(
+                                  fontSize: 32,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF3E2723),
+                                  height: 1.1,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          Row(
+                            children: [
+                              Expanded(child: searchField),
+                              const SizedBox(width: 10),
+                              cartButton,
+                            ],
+                          ),
+                        ],
+                      )
+                    : Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                "Featured collection",
+                                style: TextStyle(
+                                  color: Colors.brown,
+                                  fontSize: 14,
+                                ),
+                              ),
+                              Text(
+                                "TIVRA\nCollection",
+                                style: TextStyle(
+                                  fontSize: 32,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF3E2723),
+                                  height: 1.1,
+                                ),
+                              ),
+                            ],
+                          ),
+                          Row(
+                            children: [
+                              SizedBox(width: 210, child: searchField),
+                              const SizedBox(width: 10),
+                              cartButton,
+                            ],
+                          ),
+                        ],
+                      );
+              },
+            ),
+            const SizedBox(height: 20),
+
+            ClipRRect(
+              borderRadius: BorderRadius.circular(30),
+              child: Container(
+                height: heroHeight,
+                width: double.infinity,
+                decoration: const BoxDecoration(
+                  image: DecorationImage(
+                    image: AssetImage('assets/bag7.jpg'),
+                    fit: BoxFit.cover,
+                  ),
+                ),
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.white.withOpacity(0.12),
+                        Colors.black.withOpacity(0.10),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 30),
+
+            const Wrap(
+              alignment: WrapAlignment.spaceBetween,
+              spacing: 12,
+              runSpacing: 6,
+              children: [
+                Text(
+                  "New Arrivals",
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF3E2723),
+                  ),
+                ),
+                Text(
+                  "View all",
+                  style: TextStyle(
+                    color: Colors.brown,
+                    decoration: TextDecoration.underline,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+
+            KeyedSubtree(
+              key: _newArrivalsSectionKey,
+              child: NewArrivalSection(
+                onBuyNow: _addSelectedItem,
+                onToggleFavorite: widget.onToggleFavorite,
+                isFavorite: widget.isFavorite,
+              ),
+            ),
+
+            const SizedBox(height: 30),
+
+            BagDescriptionSection(isCompact: isCompactPage),
+
+            const SizedBox(height: 30),
+
+            SizedBox(
+              height: 150,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                children: const [
+                  SmallProductCard(
+                    name: "Face Palette",
+                    color: Color(0xFFF2E8DF),
+                  ),
+                  SmallProductCard(name: "Concealer", color: Color(0xFFEADFD4)),
+                ],
+              ),
+            ),
+          ],
+        );
 
         return SingleChildScrollView(
           padding: EdgeInsets.all(pagePadding),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              LayoutBuilder(
-                builder: (context, constraints) {
-                  final bool isCompact = constraints.maxWidth < 560;
-
-                  final Widget searchField = GlassCard(
-                    borderRadius: BorderRadius.circular(22),
-                    tint: Colors.white.withOpacity(0.22),
-                    padding: const EdgeInsets.all(3),
-                    child: Container(
-                      height: 44,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.35),
-                        borderRadius: BorderRadius.circular(18),
-                        border: Border.all(
-                          color: Colors.white.withOpacity(0.45),
-                        ),
-                      ),
-                      child: TextField(
-                        readOnly: true,
-                        onTap: openSearchPopupAndGoToNewArrivals,
-                        style: const TextStyle(
-                          color: Color(0xFF4E342E),
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                        ),
-                        cursorColor: const Color(0xFF5D4037),
-                        decoration: const InputDecoration(
-                          isDense: true,
-                          contentPadding: EdgeInsets.symmetric(vertical: 10),
-                          hintText: 'Tap to search bags',
-                          hintStyle: TextStyle(
-                            color: Color(0xFF6C5A48),
-                            fontSize: 15,
-                            letterSpacing: 0.3,
-                          ),
-                          prefixIcon: Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 10),
-                            child: Icon(
-                              Icons.search_rounded,
-                              size: 26,
-                              color: Color(0xFF4E342E),
-                            ),
-                          ),
-                          prefixIconConstraints: BoxConstraints(
-                            minWidth: 44,
-                            minHeight: 40,
-                          ),
-                          border: InputBorder.none,
-                        ),
-                      ),
-                    ),
-                  );
-
-                  final Widget cartButton = Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      GlassCard(
-                        borderRadius: BorderRadius.circular(14),
-                        tint: Colors.white.withOpacity(0.28),
-                        padding: EdgeInsets.zero,
-                        child: IconButton(
-                          onPressed: _showSelectedItemsPopup,
-                          icon: const Icon(
-                            Icons.shopping_bag_outlined,
-                            color: Color(0xFF3E2723),
-                          ),
-                          tooltip: 'Open selected items',
-                        ),
-                      ),
-                      if (_selectedItemCount > 0)
-                        Positioned(
-                          right: -4,
-                          top: -6,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF5D4037),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Text(
-                              '$_selectedItemCount',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ),
-                        ),
-                    ],
-                  );
-
-                  return isCompact
-                      ? Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  "Featured collection",
-                                  style: TextStyle(
-                                    color: Colors.brown,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                                Text(
-                                  "TIVRA\nCollection",
-                                  style: TextStyle(
-                                    fontSize: 32,
-                                    fontWeight: FontWeight.bold,
-                                    color: Color(0xFF3E2723),
-                                    height: 1.1,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 12),
-                            Row(
-                              children: [
-                                Expanded(child: searchField),
-                                const SizedBox(width: 10),
-                                cartButton,
-                              ],
-                            ),
-                          ],
-                        )
-                      : Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  "Featured collection",
-                                  style: TextStyle(
-                                    color: Colors.brown,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                                Text(
-                                  "TIVRA\nCollection",
-                                  style: TextStyle(
-                                    fontSize: 32,
-                                    fontWeight: FontWeight.bold,
-                                    color: Color(0xFF3E2723),
-                                    height: 1.1,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            Row(
-                              children: [
-                                SizedBox(width: 210, child: searchField),
-                                const SizedBox(width: 10),
-                                cartButton,
-                              ],
-                            ),
-                          ],
-                        );
-                },
-              ),
-              const SizedBox(height: 20),
-
-              ClipRRect(
-                borderRadius: BorderRadius.circular(30),
-                child: Container(
-                  height: heroHeight,
-                  width: double.infinity,
-                  decoration: const BoxDecoration(
-                    image: DecorationImage(
-                      image: AssetImage('assets/bag7.jpg'),
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Colors.white.withOpacity(0.12),
-                          Colors.black.withOpacity(0.10),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 30),
-
-              const Wrap(
-                alignment: WrapAlignment.spaceBetween,
-                spacing: 12,
-                runSpacing: 6,
-                children: [
-                  Text(
-                    "New Arrivals",
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF3E2723),
-                    ),
-                  ),
-                  Text(
-                    "View all",
-                    style: TextStyle(
-                      color: Colors.brown,
-                      decoration: TextDecoration.underline,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-
-              KeyedSubtree(
-                key: _newArrivalsSectionKey,
-                child: NewArrivalSection(
-                  onBuyNow: _addSelectedItem,
-                  onToggleFavorite: widget.onToggleFavorite,
-                  isFavorite: widget.isFavorite,
-                ),
-              ),
-
-              const SizedBox(height: 30),
-
-              BagDescriptionSection(isCompact: isCompactPage),
-
-              const SizedBox(height: 30),
-
-              SizedBox(
-                height: 150,
-                child: ListView(
-                  scrollDirection: Axis.horizontal,
-                  children: const [
-                    SmallProductCard(
-                      name: "Face Palette",
-                      color: Color(0xFFF2E8DF),
-                    ),
-                    SmallProductCard(
-                      name: "Concealer",
-                      color: Color(0xFFEADFD4),
-                    ),
+          child: showLeftFilters
+              ? Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(width: 252, child: FiltersSidebar()),
+                    const SizedBox(width: 22),
+                    Expanded(child: mainContent),
                   ],
-                ),
-              ),
-            ],
-          ),
+                )
+              : mainContent,
         );
       },
     );
@@ -1860,6 +1867,374 @@ class BagDescriptionSection extends StatelessWidget {
       }),
     );
   }
+}
+
+class FiltersSidebar extends StatefulWidget {
+  const FiltersSidebar({super.key});
+
+  @override
+  State<FiltersSidebar> createState() => _FiltersSidebarState();
+}
+
+class _FiltersSidebarState extends State<FiltersSidebar> {
+  final Set<String> _selectedCategoryFilters = {};
+  bool _inStock = false;
+  bool _outOfStock = false;
+  RangeValues _priceRange = const RangeValues(0, 589);
+  final Set<int> _selectedColors = {};
+  bool _handbags = false;
+  bool _isabel = false;
+  final Set<String> _expandedSections = {};
+
+  static const List<_FilterItem> _topCategories = [
+    _FilterItem('Barrel bag', 9),
+    _FilterItem('Box clutch', 9),
+    _FilterItem('Briefcase', 9),
+    _FilterItem('Bucket bag', 9),
+    _FilterItem('Clutch bag', 10),
+    _FilterItem('Crossbody bag', 12),
+    _FilterItem('Feature product', 9),
+  ];
+
+  static const List<Color> _palette = [
+    Color(0xFFF2EFE6),
+    Color(0xFFE8DFCC),
+    Color(0xFFEDD8A8),
+    Color(0xFF1F1F1F),
+    Color(0xFF6D4C41),
+    Color(0xFF8D1E1E),
+    Color(0xFFE8B38C),
+    Color(0xFFB71C1C),
+    Color(0xFFA86C3C),
+    Color(0xFFBDBDBD),
+    Color(0xFFE7D8A9),
+    Color(0xFFD6D6D6),
+  ];
+
+  Widget _buildFilterRow({
+    required String label,
+    required int count,
+    required bool value,
+    required ValueChanged<bool?> onChanged,
+  }) {
+    return Row(
+      children: [
+        Transform.scale(
+          scale: 0.9,
+          child: Checkbox(
+            value: value,
+            onChanged: onChanged,
+            activeColor: const Color(0xFF6C5A48),
+            side: BorderSide(color: const Color(0xFF6C5A48).withOpacity(0.35)),
+            visualDensity: VisualDensity.compact,
+          ),
+        ),
+        Expanded(
+          child: Text(
+            label,
+            style: const TextStyle(
+              color: Color(0xFF4E342E),
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+        Text(
+          '($count)',
+          style: const TextStyle(
+            color: Color(0xFF4E342E),
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildExpandableSection({
+    required String title,
+    required Widget child,
+    String? subtitle,
+    VoidCallback? onReset,
+  }) {
+    final bool isExpanded = _expandedSections.contains(title);
+
+    return GlassCard(
+      borderRadius: BorderRadius.circular(14),
+      tint: const Color(0x99F8EFE8),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    color: Color(0xFF3E2723),
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              if (onReset != null)
+                TextButton(onPressed: onReset, child: const Text('Reset')),
+              IconButton(
+                onPressed: () {
+                  setState(() {
+                    if (isExpanded) {
+                      _expandedSections.remove(title);
+                    } else {
+                      _expandedSections.add(title);
+                    }
+                  });
+                },
+                icon: Icon(
+                  isExpanded ? Icons.expand_less : Icons.expand_more,
+                  color: const Color(0xFF5D4037),
+                ),
+                iconSize: 20,
+                constraints: const BoxConstraints.tightFor(
+                  width: 28,
+                  height: 28,
+                ),
+                tooltip: isExpanded ? 'Collapse' : 'Expand',
+              ),
+            ],
+          ),
+          if (subtitle != null)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 2),
+              child: Text(
+                subtitle,
+                style: const TextStyle(
+                  color: Color(0xFF6C5A48),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          if (isExpanded) ...[const SizedBox(height: 4), child],
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final int selectedAvailability = (_inStock ? 1 : 0) + (_outOfStock ? 1 : 0);
+
+    return GlassCard(
+      borderRadius: BorderRadius.circular(22),
+      tint: const Color(0x66F8EFE8),
+      padding: const EdgeInsets.all(12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildExpandableSection(
+            title: 'Categories',
+            child: Column(
+              children: _topCategories.map((item) {
+                final bool checked = _selectedCategoryFilters.contains(
+                  item.label,
+                );
+                return _buildFilterRow(
+                  label: item.label,
+                  count: item.count,
+                  value: checked,
+                  onChanged: (value) {
+                    setState(() {
+                      if (value ?? false) {
+                        _selectedCategoryFilters.add(item.label);
+                      } else {
+                        _selectedCategoryFilters.remove(item.label);
+                      }
+                    });
+                  },
+                );
+              }).toList(),
+            ),
+          ),
+          const SizedBox(height: 8),
+          _buildExpandableSection(
+            title: 'Filter',
+            child: const Text(
+              '15 products',
+              style: TextStyle(
+                color: Color(0xFF4E342E),
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          _buildExpandableSection(
+            title: 'Availability',
+            subtitle: '$selectedAvailability selected',
+            onReset: () {
+              setState(() {
+                _inStock = false;
+                _outOfStock = false;
+              });
+            },
+            child: Column(
+              children: [
+                _buildFilterRow(
+                  label: 'In stock',
+                  count: 15,
+                  value: _inStock,
+                  onChanged: (value) =>
+                      setState(() => _inStock = value ?? false),
+                ),
+                _buildFilterRow(
+                  label: 'Out of stock',
+                  count: 0,
+                  value: _outOfStock,
+                  onChanged: (value) =>
+                      setState(() => _outOfStock = value ?? false),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+          _buildExpandableSection(
+            title: 'Price',
+            subtitle: 'The highest price is \$589.00',
+            onReset: () {
+              setState(() {
+                _priceRange = const RangeValues(0, 589);
+              });
+            },
+            child: Column(
+              children: [
+                RangeSlider(
+                  values: _priceRange,
+                  min: 0,
+                  max: 589,
+                  divisions: 50,
+                  activeColor: const Color(0xFF6C5A48),
+                  inactiveColor: const Color(0x336C5A48),
+                  labels: RangeLabels(
+                    _priceRange.start.round().toString(),
+                    _priceRange.end.round().toString(),
+                  ),
+                  onChanged: (value) {
+                    setState(() {
+                      _priceRange = value;
+                    });
+                  },
+                ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0x99FDFBF9),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: const Color(0x336C5A48)),
+                        ),
+                        child: Text('From: \$${_priceRange.start.round()}'),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0x99FDFBF9),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: const Color(0x336C5A48)),
+                        ),
+                        child: Text('To: \$${_priceRange.end.round()}'),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+          _buildExpandableSection(
+            title: 'Color',
+            subtitle: '${_selectedColors.length} selected',
+            onReset: () => setState(() => _selectedColors.clear()),
+            child: Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: List.generate(_palette.length, (index) {
+                final bool selected = _selectedColors.contains(index);
+                return InkWell(
+                  borderRadius: BorderRadius.circular(30),
+                  onTap: () {
+                    setState(() {
+                      if (selected) {
+                        _selectedColors.remove(index);
+                      } else {
+                        _selectedColors.add(index);
+                      }
+                    });
+                  },
+                  child: Container(
+                    width: 24,
+                    height: 24,
+                    decoration: BoxDecoration(
+                      color: _palette[index],
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: selected
+                            ? const Color(0xFF3E2723)
+                            : const Color(0x33FFFFFF),
+                        width: selected ? 2 : 1,
+                      ),
+                    ),
+                  ),
+                );
+              }),
+            ),
+          ),
+          const SizedBox(height: 8),
+          _buildExpandableSection(
+            title: 'Category',
+            subtitle: '${_handbags ? 1 : 0} selected',
+            onReset: () => setState(() => _handbags = false),
+            child: _buildFilterRow(
+              label: 'Handbags',
+              count: 15,
+              value: _handbags,
+              onChanged: (value) => setState(() => _handbags = value ?? false),
+            ),
+          ),
+          const SizedBox(height: 8),
+          _buildExpandableSection(
+            title: 'Brand',
+            subtitle: '${_isabel ? 1 : 0} selected',
+            onReset: () => setState(() => _isabel = false),
+            child: _buildFilterRow(
+              label: 'Isabel',
+              count: 15,
+              value: _isabel,
+              onChanged: (value) => setState(() => _isabel = value ?? false),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FilterItem {
+  final String label;
+  final int count;
+
+  const _FilterItem(this.label, this.count);
 }
 
 class _BagStoryText extends StatelessWidget {
