@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() => runApp(const ElegantCosmeticApp());
 
@@ -46,34 +47,224 @@ class AuthGateway extends StatefulWidget {
 }
 
 class _AuthGatewayState extends State<AuthGateway> {
-  bool _isAuthenticated = false;
+  static const String _isLoggedInKey = 'is_logged_in';
+  static const String _currentUsernameKey = 'current_username';
+  static const String _savedFirstNameKey = 'saved_first_name';
+  static const String _savedLastNameKey = 'saved_last_name';
+  static const String _savedUsernameKey = 'saved_username';
+  static const String _savedPasswordKey = 'saved_password';
 
-  void _onAuthenticated() {
+  bool _isLoading = true;
+  bool _isAuthenticated = false;
+  String? _currentUsername;
+  String? _savedFirstName;
+  String? _savedLastName;
+  String? _savedUsername;
+  String? _savedPassword;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAuthState();
+  }
+
+  Future<void> _loadAuthState() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    if (!mounted) return;
+
+    setState(() {
+      _isAuthenticated = prefs.getBool(_isLoggedInKey) ?? false;
+      _currentUsername = prefs.getString(_currentUsernameKey);
+      _savedFirstName = prefs.getString(_savedFirstNameKey);
+      _savedLastName = prefs.getString(_savedLastNameKey);
+      _savedUsername = prefs.getString(_savedUsernameKey);
+      _savedPassword = prefs.getString(_savedPasswordKey);
+      _isLoading = false;
+    });
+  }
+
+  Future<void> _onLogin(String username, String password) async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_isLoggedInKey, true);
+    await prefs.setString(_currentUsernameKey, username);
+
+    if (!mounted) return;
+
     setState(() {
       _isAuthenticated = true;
+      _currentUsername = username;
+      _savedUsername ??= username;
+      _savedPassword ??= password;
     });
+  }
+
+  Future<void> _onSignup({
+    required String firstName,
+    required String lastName,
+    required String username,
+    required String password,
+  }) async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_savedFirstNameKey, firstName);
+    await prefs.setString(_savedLastNameKey, lastName);
+    await prefs.setString(_savedUsernameKey, username);
+    await prefs.setString(_savedPasswordKey, password);
+    await prefs.setBool(_isLoggedInKey, true);
+    await prefs.setString(_currentUsernameKey, username);
+
+    if (!mounted) return;
+
+    setState(() {
+      _savedFirstName = firstName;
+      _savedLastName = lastName;
+      _savedUsername = username;
+      _savedPassword = password;
+      _isAuthenticated = true;
+      _currentUsername = username;
+    });
+  }
+
+  Future<void> _logout() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_isLoggedInKey, false);
+    await prefs.remove(_currentUsernameKey);
+
+    if (!mounted) return;
+
+    setState(() {
+      _isAuthenticated = false;
+      _currentUsername = null;
+    });
+  }
+
+  Future<void> _openAuthFromTopIcon() async {
+    if (_isAuthenticated) {
+      await showDialog<void>(
+        context: context,
+        builder: (dialogContext) {
+          return Dialog(
+            backgroundColor: Colors.transparent,
+            child: GlassCard(
+              borderRadius: BorderRadius.circular(24),
+              tint: Colors.white.withOpacity(0.20),
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Account',
+                    style: TextStyle(
+                      color: Color(0xFF3E2723),
+                      fontSize: 22,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Logged in as ${_currentUsername ?? _savedUsername ?? 'User'}',
+                    style: const TextStyle(
+                      color: Color(0xFF5D4037),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(dialogContext),
+                        child: const Text('Close'),
+                      ),
+                      const SizedBox(width: 8),
+                      ElevatedButton(
+                        onPressed: () async {
+                          Navigator.pop(dialogContext);
+                          await _logout();
+                        },
+                        child: const Text('Logout'),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      );
+      return;
+    }
+
+    if (!mounted) return;
+
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => AuthSection(
+          savedFirstName: _savedFirstName,
+          savedLastName: _savedLastName,
+          savedUsername: _savedUsername,
+          savedPassword: _savedPassword,
+          onLogin: _onLogin,
+          onSignup: _onSignup,
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_isAuthenticated) {
-      return const MainNavigationLayout();
+    if (_isLoading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
-    return AuthSection(onAuthenticated: _onAuthenticated);
+    return MainNavigationLayout(
+      onAuthPressed: _openAuthFromTopIcon,
+      isAuthenticated: _isAuthenticated,
+      currentUsername: _currentUsername ?? _savedUsername,
+    );
   }
 }
 
 class AuthSection extends StatefulWidget {
-  final VoidCallback onAuthenticated;
+  final String? savedFirstName;
+  final String? savedLastName;
+  final String? savedUsername;
+  final String? savedPassword;
+  final Future<void> Function(String username, String password) onLogin;
+  final Future<void> Function({
+    required String firstName,
+    required String lastName,
+    required String username,
+    required String password,
+  })
+  onSignup;
 
-  const AuthSection({super.key, required this.onAuthenticated});
+  const AuthSection({
+    super.key,
+    required this.onLogin,
+    required this.onSignup,
+    this.savedFirstName,
+    this.savedLastName,
+    this.savedUsername,
+    this.savedPassword,
+  });
 
   @override
   State<AuthSection> createState() => _AuthSectionState();
 }
 
 class _AuthSectionState extends State<AuthSection> {
+  @override
+  void initState() {
+    super.initState();
+    _loginUsernameController.text = widget.savedUsername ?? '';
+    _loginPasswordController.text = widget.savedPassword ?? '';
+    _firstNameController.text = widget.savedFirstName ?? '';
+    _lastNameController.text = widget.savedLastName ?? '';
+    _signupUsernameController.text = widget.savedUsername ?? '';
+  }
+
   final GlobalKey<FormState> _loginFormKey = GlobalKey<FormState>();
   final GlobalKey<FormState> _signupFormKey = GlobalKey<FormState>();
 
@@ -103,25 +294,47 @@ class _AuthSectionState extends State<AuthSection> {
     super.dispose();
   }
 
-  void _handleLogin() {
+  Future<void> _handleLogin() async {
     if (!(_loginFormKey.currentState?.validate() ?? false)) {
       return;
     }
 
-    widget.onAuthenticated();
+    final String username = _loginUsernameController.text.trim();
+    final String password = _loginPasswordController.text.trim();
+
+    if ((widget.savedUsername?.isNotEmpty ?? false) &&
+        (widget.savedPassword?.isNotEmpty ?? false) &&
+        (username != widget.savedUsername ||
+            password != widget.savedPassword)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Invalid username or password.')),
+      );
+      return;
+    }
+
+    await widget.onLogin(username, password);
+    if (mounted) Navigator.pop(context);
   }
 
-  void _handleSignup() {
+  Future<void> _handleSignup() async {
     if (!(_signupFormKey.currentState?.validate() ?? false)) {
       return;
     }
+
+    await widget.onSignup(
+      firstName: _firstNameController.text.trim(),
+      lastName: _lastNameController.text.trim(),
+      username: _signupUsernameController.text.trim(),
+      password: _signupPasswordController.text.trim(),
+    );
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Signup successful. You are now logged in.'),
       ),
     );
-    widget.onAuthenticated();
+
+    if (mounted) Navigator.pop(context);
   }
 
   Future<void> _handleForgotPassword() async {
@@ -280,6 +493,20 @@ class _AuthSectionState extends State<AuthSection> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
+                                    if ((widget.savedUsername?.isNotEmpty ??
+                                        false))
+                                      Padding(
+                                        padding: const EdgeInsets.only(
+                                          bottom: 8,
+                                        ),
+                                        child: Text(
+                                          'Signed up username: ${widget.savedUsername}',
+                                          style: const TextStyle(
+                                            color: Color(0xFF6C5A48),
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ),
                                     TextFormField(
                                       controller: _loginUsernameController,
                                       decoration: const InputDecoration(
@@ -445,7 +672,16 @@ class _AuthSectionState extends State<AuthSection> {
 }
 
 class MainNavigationLayout extends StatefulWidget {
-  const MainNavigationLayout({super.key});
+  final VoidCallback onAuthPressed;
+  final bool isAuthenticated;
+  final String? currentUsername;
+
+  const MainNavigationLayout({
+    super.key,
+    required this.onAuthPressed,
+    required this.isAuthenticated,
+    this.currentUsername,
+  });
 
   @override
   State<MainNavigationLayout> createState() => _MainNavigationLayoutState();
@@ -467,8 +703,13 @@ class _MainNavigationLayoutState extends State<MainNavigationLayout> {
       child: Text("Search Page", style: TextStyle(color: Color(0xFF3E2723))),
     ),
     SavedPage(favoriteItems: _favoriteItems.values.toList(growable: false)),
-    const Center(
-      child: Text("Profile", style: TextStyle(color: Color(0xFF3E2723))),
+    Center(
+      child: Text(
+        widget.isAuthenticated
+            ? 'Profile: ${widget.currentUsername ?? 'User'}'
+            : 'Profile',
+        style: const TextStyle(color: Color(0xFF3E2723)),
+      ),
     ),
   ];
 
@@ -563,17 +804,22 @@ class _MainNavigationLayoutState extends State<MainNavigationLayout> {
                                 tooltip: 'Saved',
                               ),
                               IconButton(
-                                onPressed: () =>
-                                    setState(() => _selectedIndex = 3),
+                                onPressed: widget.onAuthPressed,
                                 iconSize: 22,
                                 padding: EdgeInsets.zero,
                                 constraints: const BoxConstraints.tightFor(
                                   width: 34,
                                   height: 34,
                                 ),
-                                icon: const Icon(Icons.person_outline),
+                                icon: Icon(
+                                  widget.isAuthenticated
+                                      ? Icons.verified_user_outlined
+                                      : Icons.login,
+                                ),
                                 color: const Color(0xFF6C5A48),
-                                tooltip: 'Profile',
+                                tooltip: widget.isAuthenticated
+                                    ? 'Account'
+                                    : 'Login / Signup',
                               ),
                             ],
                           ),
@@ -629,12 +875,34 @@ class _MainNavigationLayoutState extends State<MainNavigationLayout> {
                               ),
                             ),
                             const SizedBox(width: 10),
+                            if (widget.isAuthenticated)
+                              SizedBox(
+                                width: 110,
+                                child: Text(
+                                  widget.currentUsername ?? 'User',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  textAlign: TextAlign.right,
+                                  style: const TextStyle(
+                                    color: Color(0xFF5D4037),
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            if (widget.isAuthenticated)
+                              const SizedBox(width: 6),
                             IconButton(
-                              onPressed: () =>
-                                  setState(() => _selectedIndex = 3),
-                              icon: const Icon(Icons.person_outline),
+                              onPressed: widget.onAuthPressed,
+                              icon: Icon(
+                                widget.isAuthenticated
+                                    ? Icons.verified_user_outlined
+                                    : Icons.login,
+                              ),
                               color: const Color(0xFF6C5A48),
-                              tooltip: 'Profile',
+                              tooltip: widget.isAuthenticated
+                                  ? 'Account'
+                                  : 'Login / Signup',
                             ),
                             IconButton(
                               onPressed: () =>
@@ -1494,262 +1762,293 @@ class _BagPageState extends State<BagPage> {
         final bool isCompactPage = pageConstraints.maxWidth < 700;
         final double pagePadding = isCompactPage ? 14 : 30;
         final double heroHeight = isCompactPage ? 320 : 500;
+        final bool showLeftFilters = pageConstraints.maxWidth >= 1080;
+        final double topSectionMaxHeight = heroHeight + 150;
+
+        final Widget topContent = Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final bool isCompact = constraints.maxWidth < 560;
+
+                final Widget searchField = GlassCard(
+                  borderRadius: BorderRadius.circular(22),
+                  tint: Colors.white.withOpacity(0.22),
+                  padding: const EdgeInsets.all(3),
+                  child: Container(
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.35),
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(color: Colors.white.withOpacity(0.45)),
+                    ),
+                    child: TextField(
+                      readOnly: true,
+                      onTap: openSearchPopupAndGoToNewArrivals,
+                      style: const TextStyle(
+                        color: Color(0xFF4E342E),
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      cursorColor: const Color(0xFF5D4037),
+                      decoration: const InputDecoration(
+                        isDense: true,
+                        contentPadding: EdgeInsets.symmetric(vertical: 10),
+                        hintText: 'Tap to search bags',
+                        hintStyle: TextStyle(
+                          color: Color(0xFF6C5A48),
+                          fontSize: 15,
+                          letterSpacing: 0.3,
+                        ),
+                        prefixIcon: Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 10),
+                          child: Icon(
+                            Icons.search_rounded,
+                            size: 26,
+                            color: Color(0xFF4E342E),
+                          ),
+                        ),
+                        prefixIconConstraints: BoxConstraints(
+                          minWidth: 44,
+                          minHeight: 40,
+                        ),
+                        border: InputBorder.none,
+                      ),
+                    ),
+                  ),
+                );
+
+                final Widget cartButton = Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    GlassCard(
+                      borderRadius: BorderRadius.circular(14),
+                      tint: Colors.white.withOpacity(0.28),
+                      padding: EdgeInsets.zero,
+                      child: IconButton(
+                        onPressed: _showSelectedItemsPopup,
+                        icon: const Icon(
+                          Icons.shopping_bag_outlined,
+                          color: Color(0xFF3E2723),
+                        ),
+                        tooltip: 'Open selected items',
+                      ),
+                    ),
+                    if (_selectedItemCount > 0)
+                      Positioned(
+                        right: -4,
+                        top: -6,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF5D4037),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            '$_selectedItemCount',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                );
+
+                return isCompact
+                    ? Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                "Featured collection",
+                                style: TextStyle(
+                                  color: Colors.brown,
+                                  fontSize: 14,
+                                ),
+                              ),
+                              Text(
+                                "TIVRA\nCollection",
+                                style: TextStyle(
+                                  fontSize: 32,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF3E2723),
+                                  height: 1.1,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          Row(
+                            children: [
+                              Expanded(child: searchField),
+                              const SizedBox(width: 10),
+                              cartButton,
+                            ],
+                          ),
+                        ],
+                      )
+                    : Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                "Featured collection",
+                                style: TextStyle(
+                                  color: Colors.brown,
+                                  fontSize: 14,
+                                ),
+                              ),
+                              Text(
+                                "TIVRA\nCollection",
+                                style: TextStyle(
+                                  fontSize: 32,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF3E2723),
+                                  height: 1.1,
+                                ),
+                              ),
+                            ],
+                          ),
+                          Row(
+                            children: [
+                              SizedBox(width: 210, child: searchField),
+                              const SizedBox(width: 10),
+                              cartButton,
+                            ],
+                          ),
+                        ],
+                      );
+              },
+            ),
+            const SizedBox(height: 20),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(30),
+              child: Container(
+                height: heroHeight,
+                width: double.infinity,
+                decoration: const BoxDecoration(
+                  image: DecorationImage(
+                    image: AssetImage('assets/bag7.jpg'),
+                    fit: BoxFit.cover,
+                  ),
+                ),
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.white.withOpacity(0.12),
+                        Colors.black.withOpacity(0.10),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
+
+        final Widget bottomContent = Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Wrap(
+              alignment: WrapAlignment.spaceBetween,
+              spacing: 12,
+              runSpacing: 6,
+              children: [
+                Text(
+                  "New Arrivals",
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF3E2723),
+                  ),
+                ),
+                Text(
+                  "View all",
+                  style: TextStyle(
+                    color: Colors.brown,
+                    decoration: TextDecoration.underline,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            KeyedSubtree(
+              key: _newArrivalsSectionKey,
+              child: NewArrivalSection(
+                onBuyNow: _addSelectedItem,
+                onToggleFavorite: widget.onToggleFavorite,
+                isFavorite: widget.isFavorite,
+              ),
+            ),
+            const SizedBox(height: 30),
+            BagDescriptionSection(isCompact: isCompactPage),
+            const SizedBox(height: 30),
+            SizedBox(
+              height: 150,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                children: const [
+                  SmallProductCard(
+                    name: "Face Palette",
+                    color: Color(0xFFF2E8DF),
+                  ),
+                  SmallProductCard(name: "Concealer", color: Color(0xFFEADFD4)),
+                ],
+              ),
+            ),
+          ],
+        );
+
+        if (!showLeftFilters) {
+          return SingleChildScrollView(
+            padding: EdgeInsets.all(pagePadding),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [topContent, const SizedBox(height: 30), bottomContent],
+            ),
+          );
+        }
 
         return SingleChildScrollView(
           padding: EdgeInsets.all(pagePadding),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              LayoutBuilder(
-                builder: (context, constraints) {
-                  final bool isCompact = constraints.maxWidth < 560;
-
-                  final Widget searchField = GlassCard(
-                    borderRadius: BorderRadius.circular(22),
-                    tint: Colors.white.withOpacity(0.22),
-                    padding: const EdgeInsets.all(3),
-                    child: Container(
-                      height: 44,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.35),
-                        borderRadius: BorderRadius.circular(18),
-                        border: Border.all(
-                          color: Colors.white.withOpacity(0.45),
-                        ),
-                      ),
-                      child: TextField(
-                        readOnly: true,
-                        onTap: openSearchPopupAndGoToNewArrivals,
-                        style: const TextStyle(
-                          color: Color(0xFF4E342E),
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                        ),
-                        cursorColor: const Color(0xFF5D4037),
-                        decoration: const InputDecoration(
-                          isDense: true,
-                          contentPadding: EdgeInsets.symmetric(vertical: 10),
-                          hintText: 'Tap to search bags',
-                          hintStyle: TextStyle(
-                            color: Color(0xFF6C5A48),
-                            fontSize: 15,
-                            letterSpacing: 0.3,
-                          ),
-                          prefixIcon: Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 10),
-                            child: Icon(
-                              Icons.search_rounded,
-                              size: 26,
-                              color: Color(0xFF4E342E),
-                            ),
-                          ),
-                          prefixIconConstraints: BoxConstraints(
-                            minWidth: 44,
-                            minHeight: 40,
-                          ),
-                          border: InputBorder.none,
-                        ),
-                      ),
-                    ),
-                  );
-
-                  final Widget cartButton = Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      GlassCard(
-                        borderRadius: BorderRadius.circular(14),
-                        tint: Colors.white.withOpacity(0.28),
-                        padding: EdgeInsets.zero,
-                        child: IconButton(
-                          onPressed: _showSelectedItemsPopup,
-                          icon: const Icon(
-                            Icons.shopping_bag_outlined,
-                            color: Color(0xFF3E2723),
-                          ),
-                          tooltip: 'Open selected items',
-                        ),
-                      ),
-                      if (_selectedItemCount > 0)
-                        Positioned(
-                          right: -4,
-                          top: -6,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF5D4037),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Text(
-                              '$_selectedItemCount',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ),
-                        ),
-                    ],
-                  );
-
-                  return isCompact
-                      ? Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  "Featured collection",
-                                  style: TextStyle(
-                                    color: Colors.brown,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                                Text(
-                                  "TIVRA\nCollection",
-                                  style: TextStyle(
-                                    fontSize: 32,
-                                    fontWeight: FontWeight.bold,
-                                    color: Color(0xFF3E2723),
-                                    height: 1.1,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 12),
-                            Row(
-                              children: [
-                                Expanded(child: searchField),
-                                const SizedBox(width: 10),
-                                cartButton,
-                              ],
-                            ),
-                          ],
-                        )
-                      : Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  "Featured collection",
-                                  style: TextStyle(
-                                    color: Colors.brown,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                                Text(
-                                  "TIVRA\nCollection",
-                                  style: TextStyle(
-                                    fontSize: 32,
-                                    fontWeight: FontWeight.bold,
-                                    color: Color(0xFF3E2723),
-                                    height: 1.1,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            Row(
-                              children: [
-                                SizedBox(width: 210, child: searchField),
-                                const SizedBox(width: 10),
-                                cartButton,
-                              ],
-                            ),
-                          ],
-                        );
-                },
-              ),
-              const SizedBox(height: 20),
-
-              ClipRRect(
-                borderRadius: BorderRadius.circular(30),
-                child: Container(
-                  height: heroHeight,
-                  width: double.infinity,
-                  decoration: const BoxDecoration(
-                    image: DecorationImage(
-                      image: AssetImage('assets/bag7.jpg'),
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Colors.white.withOpacity(0.12),
-                          Colors.black.withOpacity(0.10),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 30),
-
-              const Wrap(
-                alignment: WrapAlignment.spaceBetween,
-                spacing: 12,
-                runSpacing: 6,
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    "New Arrivals",
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF3E2723),
+                  SizedBox(
+                    width: 252,
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxHeight: topSectionMaxHeight,
+                      ),
+                      child: SingleChildScrollView(
+                        child: const FiltersSidebar(),
+                      ),
                     ),
                   ),
-                  Text(
-                    "View all",
-                    style: TextStyle(
-                      color: Colors.brown,
-                      decoration: TextDecoration.underline,
-                    ),
-                  ),
+                  const SizedBox(width: 12),
+                  Expanded(child: topContent),
                 ],
               ),
-              const SizedBox(height: 20),
-
-              KeyedSubtree(
-                key: _newArrivalsSectionKey,
-                child: NewArrivalSection(
-                  onBuyNow: _addSelectedItem,
-                  onToggleFavorite: widget.onToggleFavorite,
-                  isFavorite: widget.isFavorite,
-                ),
-              ),
-
               const SizedBox(height: 30),
-
-              BagDescriptionSection(isCompact: isCompactPage),
-
-              const SizedBox(height: 30),
-
-              SizedBox(
-                height: 150,
-                child: ListView(
-                  scrollDirection: Axis.horizontal,
-                  children: const [
-                    SmallProductCard(
-                      name: "Face Palette",
-                      color: Color(0xFFF2E8DF),
-                    ),
-                    SmallProductCard(
-                      name: "Concealer",
-                      color: Color(0xFFEADFD4),
-                    ),
-                  ],
-                ),
-              ),
+              bottomContent,
             ],
           ),
         );
@@ -1860,6 +2159,374 @@ class BagDescriptionSection extends StatelessWidget {
       }),
     );
   }
+}
+
+class FiltersSidebar extends StatefulWidget {
+  const FiltersSidebar({super.key});
+
+  @override
+  State<FiltersSidebar> createState() => _FiltersSidebarState();
+}
+
+class _FiltersSidebarState extends State<FiltersSidebar> {
+  final Set<String> _selectedCategoryFilters = {};
+  bool _inStock = false;
+  bool _outOfStock = false;
+  RangeValues _priceRange = const RangeValues(0, 589);
+  final Set<int> _selectedColors = {};
+  bool _handbags = false;
+  bool _isabel = false;
+  final Set<String> _expandedSections = {};
+
+  static const List<_FilterItem> _topCategories = [
+    _FilterItem('Barrel bag', 9),
+    _FilterItem('Box clutch', 9),
+    _FilterItem('Briefcase', 9),
+    _FilterItem('Bucket bag', 9),
+    _FilterItem('Clutch bag', 10),
+    _FilterItem('Crossbody bag', 12),
+    _FilterItem('Feature product', 9),
+  ];
+
+  static const List<Color> _palette = [
+    Color(0xFFF2EFE6),
+    Color(0xFFE8DFCC),
+    Color(0xFFEDD8A8),
+    Color(0xFF1F1F1F),
+    Color(0xFF6D4C41),
+    Color(0xFF8D1E1E),
+    Color(0xFFE8B38C),
+    Color(0xFFB71C1C),
+    Color(0xFFA86C3C),
+    Color(0xFFBDBDBD),
+    Color(0xFFE7D8A9),
+    Color(0xFFD6D6D6),
+  ];
+
+  Widget _buildFilterRow({
+    required String label,
+    required int count,
+    required bool value,
+    required ValueChanged<bool?> onChanged,
+  }) {
+    return Row(
+      children: [
+        Transform.scale(
+          scale: 0.9,
+          child: Checkbox(
+            value: value,
+            onChanged: onChanged,
+            activeColor: const Color(0xFF6C5A48),
+            side: BorderSide(color: const Color(0xFF6C5A48).withOpacity(0.35)),
+            visualDensity: VisualDensity.compact,
+          ),
+        ),
+        Expanded(
+          child: Text(
+            label,
+            style: const TextStyle(
+              color: Color(0xFF4E342E),
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+        Text(
+          '($count)',
+          style: const TextStyle(
+            color: Color(0xFF4E342E),
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildExpandableSection({
+    required String title,
+    required Widget child,
+    String? subtitle,
+    VoidCallback? onReset,
+  }) {
+    final bool isExpanded = _expandedSections.contains(title);
+
+    return GlassCard(
+      borderRadius: BorderRadius.circular(14),
+      tint: const Color(0x99F8EFE8),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    color: Color(0xFF3E2723),
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              if (onReset != null)
+                TextButton(onPressed: onReset, child: const Text('Reset')),
+              IconButton(
+                onPressed: () {
+                  setState(() {
+                    if (isExpanded) {
+                      _expandedSections.remove(title);
+                    } else {
+                      _expandedSections.add(title);
+                    }
+                  });
+                },
+                icon: Icon(
+                  isExpanded ? Icons.expand_less : Icons.expand_more,
+                  color: const Color(0xFF5D4037),
+                ),
+                iconSize: 20,
+                constraints: const BoxConstraints.tightFor(
+                  width: 28,
+                  height: 28,
+                ),
+                tooltip: isExpanded ? 'Collapse' : 'Expand',
+              ),
+            ],
+          ),
+          if (subtitle != null)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 2),
+              child: Text(
+                subtitle,
+                style: const TextStyle(
+                  color: Color(0xFF6C5A48),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          if (isExpanded) ...[const SizedBox(height: 4), child],
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final int selectedAvailability = (_inStock ? 1 : 0) + (_outOfStock ? 1 : 0);
+
+    return GlassCard(
+      borderRadius: BorderRadius.circular(22),
+      tint: const Color(0x66F8EFE8),
+      padding: const EdgeInsets.all(12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildExpandableSection(
+            title: 'Categories',
+            child: Column(
+              children: _topCategories.map((item) {
+                final bool checked = _selectedCategoryFilters.contains(
+                  item.label,
+                );
+                return _buildFilterRow(
+                  label: item.label,
+                  count: item.count,
+                  value: checked,
+                  onChanged: (value) {
+                    setState(() {
+                      if (value ?? false) {
+                        _selectedCategoryFilters.add(item.label);
+                      } else {
+                        _selectedCategoryFilters.remove(item.label);
+                      }
+                    });
+                  },
+                );
+              }).toList(),
+            ),
+          ),
+          const SizedBox(height: 8),
+          _buildExpandableSection(
+            title: 'Filter',
+            child: const Text(
+              '15 products',
+              style: TextStyle(
+                color: Color(0xFF4E342E),
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          _buildExpandableSection(
+            title: 'Availability',
+            subtitle: '$selectedAvailability selected',
+            onReset: () {
+              setState(() {
+                _inStock = false;
+                _outOfStock = false;
+              });
+            },
+            child: Column(
+              children: [
+                _buildFilterRow(
+                  label: 'In stock',
+                  count: 15,
+                  value: _inStock,
+                  onChanged: (value) =>
+                      setState(() => _inStock = value ?? false),
+                ),
+                _buildFilterRow(
+                  label: 'Out of stock',
+                  count: 0,
+                  value: _outOfStock,
+                  onChanged: (value) =>
+                      setState(() => _outOfStock = value ?? false),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+          _buildExpandableSection(
+            title: 'Price',
+            subtitle: 'The highest price is \$589.00',
+            onReset: () {
+              setState(() {
+                _priceRange = const RangeValues(0, 589);
+              });
+            },
+            child: Column(
+              children: [
+                RangeSlider(
+                  values: _priceRange,
+                  min: 0,
+                  max: 589,
+                  divisions: 50,
+                  activeColor: const Color(0xFF6C5A48),
+                  inactiveColor: const Color(0x336C5A48),
+                  labels: RangeLabels(
+                    _priceRange.start.round().toString(),
+                    _priceRange.end.round().toString(),
+                  ),
+                  onChanged: (value) {
+                    setState(() {
+                      _priceRange = value;
+                    });
+                  },
+                ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0x99FDFBF9),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: const Color(0x336C5A48)),
+                        ),
+                        child: Text('From: \$${_priceRange.start.round()}'),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0x99FDFBF9),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: const Color(0x336C5A48)),
+                        ),
+                        child: Text('To: \$${_priceRange.end.round()}'),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+          _buildExpandableSection(
+            title: 'Color',
+            subtitle: '${_selectedColors.length} selected',
+            onReset: () => setState(() => _selectedColors.clear()),
+            child: Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: List.generate(_palette.length, (index) {
+                final bool selected = _selectedColors.contains(index);
+                return InkWell(
+                  borderRadius: BorderRadius.circular(30),
+                  onTap: () {
+                    setState(() {
+                      if (selected) {
+                        _selectedColors.remove(index);
+                      } else {
+                        _selectedColors.add(index);
+                      }
+                    });
+                  },
+                  child: Container(
+                    width: 24,
+                    height: 24,
+                    decoration: BoxDecoration(
+                      color: _palette[index],
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: selected
+                            ? const Color(0xFF3E2723)
+                            : const Color(0x33FFFFFF),
+                        width: selected ? 2 : 1,
+                      ),
+                    ),
+                  ),
+                );
+              }),
+            ),
+          ),
+          const SizedBox(height: 8),
+          _buildExpandableSection(
+            title: 'Category',
+            subtitle: '${_handbags ? 1 : 0} selected',
+            onReset: () => setState(() => _handbags = false),
+            child: _buildFilterRow(
+              label: 'Handbags',
+              count: 15,
+              value: _handbags,
+              onChanged: (value) => setState(() => _handbags = value ?? false),
+            ),
+          ),
+          const SizedBox(height: 8),
+          _buildExpandableSection(
+            title: 'Brand',
+            subtitle: '${_isabel ? 1 : 0} selected',
+            onReset: () => setState(() => _isabel = false),
+            child: _buildFilterRow(
+              label: 'Isabel',
+              count: 15,
+              value: _isabel,
+              onChanged: (value) => setState(() => _isabel = value ?? false),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FilterItem {
+  final String label;
+  final int count;
+
+  const _FilterItem(this.label, this.count);
 }
 
 class _BagStoryText extends StatelessWidget {
