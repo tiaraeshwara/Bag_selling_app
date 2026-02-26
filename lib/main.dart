@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() => runApp(const ElegantCosmeticApp());
@@ -418,6 +419,41 @@ class _AuthSectionState extends State<AuthSection> {
     return null;
   }
 
+  Widget _buildAuthField({
+    required String label,
+    required TextEditingController controller,
+    bool obscureText = false,
+    String? Function(String?)? validator,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            color: Color(0xFF5D4037),
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 6),
+        TextFormField(
+          controller: controller,
+          obscureText: obscureText,
+          validator: validator,
+          decoration: InputDecoration(
+            hintText: label,
+            floatingLabelBehavior: FloatingLabelBehavior.never,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 14,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -485,7 +521,7 @@ class _AuthSectionState extends State<AuthSection> {
                         ),
                         const SizedBox(height: 14),
                         SizedBox(
-                          height: 420,
+                          height: 470,
                           child: TabBarView(
                             children: [
                               Form(
@@ -493,6 +529,7 @@ class _AuthSectionState extends State<AuthSection> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
+                                    const SizedBox(height: 10),
                                     if ((widget.savedUsername?.isNotEmpty ??
                                         false))
                                       Padding(
@@ -507,23 +544,19 @@ class _AuthSectionState extends State<AuthSection> {
                                           ),
                                         ),
                                       ),
-                                    TextFormField(
+                                    _buildAuthField(
+                                      label: 'User Name',
                                       controller: _loginUsernameController,
-                                      decoration: const InputDecoration(
-                                        labelText: 'User Name',
-                                      ),
                                       validator: (value) => _requiredValidator(
                                         value,
                                         'User Name',
                                       ),
                                     ),
                                     const SizedBox(height: 12),
-                                    TextFormField(
+                                    _buildAuthField(
+                                      label: 'Password',
                                       controller: _loginPasswordController,
                                       obscureText: true,
-                                      decoration: const InputDecoration(
-                                        labelText: 'Password',
-                                      ),
                                       validator: (value) =>
                                           _requiredValidator(value, 'Password'),
                                     ),
@@ -567,54 +600,46 @@ class _AuthSectionState extends State<AuthSection> {
                               Form(
                                 key: _signupFormKey,
                                 child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    TextFormField(
+                                    const SizedBox(height: 10),
+                                    _buildAuthField(
+                                      label: 'First Name',
                                       controller: _firstNameController,
-                                      decoration: const InputDecoration(
-                                        labelText: 'First Name',
-                                      ),
                                       validator: (value) => _requiredValidator(
                                         value,
                                         'First Name',
                                       ),
                                     ),
                                     const SizedBox(height: 10),
-                                    TextFormField(
+                                    _buildAuthField(
+                                      label: 'Last Name',
                                       controller: _lastNameController,
-                                      decoration: const InputDecoration(
-                                        labelText: 'Last Name',
-                                      ),
                                       validator: (value) => _requiredValidator(
                                         value,
                                         'Last Name',
                                       ),
                                     ),
                                     const SizedBox(height: 10),
-                                    TextFormField(
+                                    _buildAuthField(
+                                      label: 'Username',
                                       controller: _signupUsernameController,
-                                      decoration: const InputDecoration(
-                                        labelText: 'Username',
-                                      ),
                                       validator: (value) =>
                                           _requiredValidator(value, 'Username'),
                                     ),
                                     const SizedBox(height: 10),
-                                    TextFormField(
+                                    _buildAuthField(
+                                      label: 'Password',
                                       controller: _signupPasswordController,
                                       obscureText: true,
-                                      decoration: const InputDecoration(
-                                        labelText: 'Password',
-                                      ),
                                       validator: (value) =>
                                           _requiredValidator(value, 'Password'),
                                     ),
                                     const SizedBox(height: 10),
-                                    TextFormField(
+                                    _buildAuthField(
+                                      label: 'Re-enter Password',
                                       controller: _reEnterPasswordController,
                                       obscureText: true,
-                                      decoration: const InputDecoration(
-                                        labelText: 'Re-enter Password',
-                                      ),
                                       validator: (value) {
                                         if (value == null || value.isEmpty) {
                                           return 'Re-enter Password is required';
@@ -748,13 +773,13 @@ class _MainNavigationLayoutState extends State<MainNavigationLayout> {
           child: Column(
             children: [
               Padding(
-                padding: const EdgeInsets.fromLTRB(10, 6, 10, 4),
+                padding: const EdgeInsets.fromLTRB(10, 4, 10, 2),
                 child: GlassCard(
-                  borderRadius: BorderRadius.circular(28),
+                  borderRadius: BorderRadius.circular(24),
                   tint: const Color(0xEAF4F0E8),
                   padding: const EdgeInsets.symmetric(
                     horizontal: 8,
-                    vertical: 2,
+                    vertical: 1,
                   ),
                   child: LayoutBuilder(
                     builder: (context, constraints) {
@@ -762,7 +787,7 @@ class _MainNavigationLayoutState extends State<MainNavigationLayout> {
 
                       if (isCompact) {
                         return SizedBox(
-                          height: 44,
+                          height: 40,
                           child: Row(
                             children: [
                               const Padding(
@@ -771,20 +796,20 @@ class _MainNavigationLayoutState extends State<MainNavigationLayout> {
                                   'TIVRA',
                                   style: TextStyle(
                                     color: Color(0xFF2F241F),
-                                    fontSize: 16,
+                                    fontSize: 15,
                                     fontWeight: FontWeight.w800,
-                                    letterSpacing: 0.8,
+                                    letterSpacing: 0.7,
                                   ),
                                 ),
                               ),
                               const Spacer(),
                               IconButton(
                                 onPressed: _openSearchFromNavigation,
-                                iconSize: 22,
+                                iconSize: 20,
                                 padding: EdgeInsets.zero,
                                 constraints: const BoxConstraints.tightFor(
-                                  width: 34,
-                                  height: 34,
+                                  width: 30,
+                                  height: 30,
                                 ),
                                 icon: const Icon(Icons.search),
                                 color: const Color(0xFF6C5A48),
@@ -793,11 +818,11 @@ class _MainNavigationLayoutState extends State<MainNavigationLayout> {
                               IconButton(
                                 onPressed: () =>
                                     setState(() => _selectedIndex = 2),
-                                iconSize: 22,
+                                iconSize: 20,
                                 padding: EdgeInsets.zero,
                                 constraints: const BoxConstraints.tightFor(
-                                  width: 34,
-                                  height: 34,
+                                  width: 30,
+                                  height: 30,
                                 ),
                                 icon: const Icon(Icons.favorite_border),
                                 color: const Color(0xFF6C5A48),
@@ -805,11 +830,11 @@ class _MainNavigationLayoutState extends State<MainNavigationLayout> {
                               ),
                               IconButton(
                                 onPressed: widget.onAuthPressed,
-                                iconSize: 22,
+                                iconSize: 20,
                                 padding: EdgeInsets.zero,
                                 constraints: const BoxConstraints.tightFor(
-                                  width: 34,
-                                  height: 34,
+                                  width: 30,
+                                  height: 30,
                                 ),
                                 icon: Icon(
                                   widget.isAuthenticated
@@ -827,26 +852,26 @@ class _MainNavigationLayoutState extends State<MainNavigationLayout> {
                       }
 
                       return SizedBox(
-                        height: 52,
+                        height: 46,
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
                             const Padding(
-                              padding: EdgeInsets.only(left: 6, right: 18),
+                              padding: EdgeInsets.only(left: 4, right: 14),
                               child: Text(
                                 'TIVRA',
                                 style: TextStyle(
                                   color: Color(0xFF2F241F),
-                                  fontSize: 24,
+                                  fontSize: 20,
                                   fontWeight: FontWeight.w800,
-                                  letterSpacing: 1.2,
+                                  letterSpacing: 1.0,
                                 ),
                               ),
                             ),
                             Expanded(
                               child: Wrap(
                                 alignment: WrapAlignment.center,
-                                spacing: 10,
+                                spacing: 8,
                                 children: [
                                   _TopNavTextItem(
                                     label: 'HOME',
@@ -877,7 +902,7 @@ class _MainNavigationLayoutState extends State<MainNavigationLayout> {
                             const SizedBox(width: 10),
                             if (widget.isAuthenticated)
                               SizedBox(
-                                width: 110,
+                                width: 90,
                                 child: Text(
                                   widget.currentUsername ?? 'User',
                                   maxLines: 1,
@@ -885,15 +910,16 @@ class _MainNavigationLayoutState extends State<MainNavigationLayout> {
                                   textAlign: TextAlign.right,
                                   style: const TextStyle(
                                     color: Color(0xFF5D4037),
-                                    fontSize: 12,
+                                    fontSize: 11,
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
                               ),
                             if (widget.isAuthenticated)
-                              const SizedBox(width: 6),
+                              const SizedBox(width: 4),
                             IconButton(
                               onPressed: widget.onAuthPressed,
+                              iconSize: 22,
                               icon: Icon(
                                 widget.isAuthenticated
                                     ? Icons.verified_user_outlined
@@ -907,6 +933,7 @@ class _MainNavigationLayoutState extends State<MainNavigationLayout> {
                             IconButton(
                               onPressed: () =>
                                   setState(() => _selectedIndex = 2),
+                              iconSize: 22,
                               icon: const Icon(Icons.favorite_border),
                               color: const Color(0xFF6C5A48),
                               tooltip: 'Saved',
@@ -914,6 +941,7 @@ class _MainNavigationLayoutState extends State<MainNavigationLayout> {
                             IconButton(
                               onPressed: () =>
                                   setState(() => _selectedIndex = 0),
+                              iconSize: 22,
                               icon: const Icon(Icons.shopping_bag_outlined),
                               color: const Color(0xFF6C5A48),
                               tooltip: 'Shop',
@@ -1179,10 +1207,120 @@ class BagPage extends StatefulWidget {
   State<BagPage> createState() => _BagPageState();
 }
 
+class ElegantBrandHeader extends StatefulWidget {
+  final bool isCompact;
+
+  const ElegantBrandHeader({super.key, required this.isCompact});
+
+  @override
+  State<ElegantBrandHeader> createState() => _ElegantBrandHeaderState();
+}
+
+class _ElegantBrandHeaderState extends State<ElegantBrandHeader>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 4400),
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final double brandFontSize = widget.isCompact ? 34 : 38;
+    final double collectionFontSize = widget.isCompact ? 16 : 18;
+
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, _) {
+        final double t = Curves.easeInOutSine.transform(_controller.value);
+        final double floatOffset = (0.5 - t) * 2;
+        final double scale = 0.995 + (0.01 * t);
+        final double gradientShift = 0.35 * t;
+
+        return Opacity(
+          opacity: 0.95 + (0.05 * t),
+          child: Transform.translate(
+            offset: Offset(0, floatOffset),
+            child: Transform.scale(
+              scale: scale,
+              alignment: Alignment.centerLeft,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'FEATURED COLLECTION',
+                    style: GoogleFonts.cormorantGaramond(
+                      color: const Color(0xFF6D4C41),
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 2.0,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  ShaderMask(
+                    shaderCallback: (Rect bounds) {
+                      return LinearGradient(
+                        begin: Alignment(-1 + gradientShift, -0.25),
+                        end: Alignment(1 + gradientShift, 0.95),
+                        colors: const [
+                          Color(0xFF201612),
+                          Color(0xFF6D4C41),
+                          Color(0xFF2D1F1B),
+                        ],
+                      ).createShader(bounds);
+                    },
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'TIVRA',
+                          style: GoogleFonts.playfairDisplay(
+                            fontSize: brandFontSize,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.white,
+                            height: 0.95,
+                            letterSpacing: 1.8,
+                          ),
+                        ),
+                        Text(
+                          'COLLECTION',
+                          style: GoogleFonts.cormorantGaramond(
+                            fontSize: collectionFontSize,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                            letterSpacing: 4.2,
+                            height: 1.0,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
 class _BagPageState extends State<BagPage> {
   final Map<String, int> _selectedCounts = {};
   final Map<String, ArrivalBag> _selectedItems = {};
   final GlobalKey _newArrivalsSectionKey = GlobalKey();
+  bool _showAllBags = false;
 
   Future<void> openSearchPopupAndGoToNewArrivals() async {
     await _scrollToNewArrivalsSection();
@@ -1755,6 +1893,75 @@ class _BagPageState extends State<BagPage> {
     );
   }
 
+  Widget _buildAllBagsSection() {
+    final List<ArrivalBag> items = _NewArrivalSectionState._items;
+
+    return GlassCard(
+      borderRadius: BorderRadius.circular(24),
+      tint: Colors.white.withOpacity(0.22),
+      padding: const EdgeInsets.all(14),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final int crossAxisCount = constraints.maxWidth >= 1280
+              ? 4
+              : constraints.maxWidth >= 980
+              ? 3
+              : constraints.maxWidth >= 680
+              ? 2
+              : 1;
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Text(
+                    'All Bags',
+                    style: TextStyle(
+                      color: Color(0xFF3E2723),
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const Spacer(),
+                  TextButton(
+                    onPressed: () {
+                      setState(() {
+                        _showAllBags = false;
+                      });
+                    },
+                    child: const Text('Reset'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: items.length,
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: crossAxisCount,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 12,
+                  childAspectRatio: 0.66,
+                ),
+                itemBuilder: (context, index) {
+                  final ArrivalBag item = items[index];
+                  return _AllBagGridCard(
+                    item: item,
+                    isFavorite: widget.isFavorite(item.name),
+                    onToggleFavorite: () => widget.onToggleFavorite(item),
+                    onBuyNow: () => _addSelectedItem(item),
+                  );
+                },
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
@@ -1865,27 +2072,7 @@ class _BagPageState extends State<BagPage> {
                     ? Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "Featured collection",
-                                style: TextStyle(
-                                  color: Colors.brown,
-                                  fontSize: 14,
-                                ),
-                              ),
-                              Text(
-                                "TIVRA\nCollection",
-                                style: TextStyle(
-                                  fontSize: 32,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFF3E2723),
-                                  height: 1.1,
-                                ),
-                              ),
-                            ],
-                          ),
+                          ElegantBrandHeader(isCompact: isCompact),
                           const SizedBox(height: 12),
                           Row(
                             children: [
@@ -1900,27 +2087,7 @@ class _BagPageState extends State<BagPage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "Featured collection",
-                                style: TextStyle(
-                                  color: Colors.brown,
-                                  fontSize: 14,
-                                ),
-                              ),
-                              Text(
-                                "TIVRA\nCollection",
-                                style: TextStyle(
-                                  fontSize: 32,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFF3E2723),
-                                  height: 1.1,
-                                ),
-                              ),
-                            ],
-                          ),
+                          ElegantBrandHeader(isCompact: isCompact),
                           Row(
                             children: [
                               SizedBox(width: 210, child: searchField),
@@ -1964,37 +2131,44 @@ class _BagPageState extends State<BagPage> {
         final Widget bottomContent = Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Wrap(
-              alignment: WrapAlignment.spaceBetween,
-              spacing: 12,
-              runSpacing: 6,
+            Row(
               children: [
-                Text(
-                  "New Arrivals",
+                const Text(
+                  'New Arrivals',
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                     color: Color(0xFF3E2723),
                   ),
                 ),
-                Text(
-                  "View all",
-                  style: TextStyle(
-                    color: Colors.brown,
-                    decoration: TextDecoration.underline,
+                const Spacer(),
+                TextButton(
+                  onPressed: () {
+                    setState(() {
+                      _showAllBags = true;
+                    });
+                  },
+                  child: const Text(
+                    'View all',
+                    style: TextStyle(
+                      color: Colors.brown,
+                      decoration: TextDecoration.underline,
+                    ),
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 20),
-            KeyedSubtree(
-              key: _newArrivalsSectionKey,
-              child: NewArrivalSection(
-                onBuyNow: _addSelectedItem,
-                onToggleFavorite: widget.onToggleFavorite,
-                isFavorite: widget.isFavorite,
-              ),
-            ),
+            _showAllBags
+                ? _buildAllBagsSection()
+                : KeyedSubtree(
+                    key: _newArrivalsSectionKey,
+                    child: NewArrivalSection(
+                      onBuyNow: _addSelectedItem,
+                      onToggleFavorite: widget.onToggleFavorite,
+                      isFavorite: widget.isFavorite,
+                    ),
+                  ),
             const SizedBox(height: 30),
             BagDescriptionSection(isCompact: isCompactPage),
             const SizedBox(height: 30),
@@ -2926,6 +3100,104 @@ class ArrivalBagCard extends StatefulWidget {
 
   @override
   State<ArrivalBagCard> createState() => _ArrivalBagCardState();
+}
+
+class _AllBagGridCard extends StatelessWidget {
+  final ArrivalBag item;
+  final bool isFavorite;
+  final VoidCallback onToggleFavorite;
+  final VoidCallback onBuyNow;
+
+  const _AllBagGridCard({
+    required this.item,
+    required this.isFavorite,
+    required this.onToggleFavorite,
+    required this.onBuyNow,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GlassCard(
+      borderRadius: BorderRadius.circular(20),
+      tint: Colors.white.withOpacity(0.20),
+      padding: const EdgeInsets.all(10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Text(
+                'ECO',
+                style: TextStyle(
+                  color: Color(0xFF5D4037),
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const Spacer(),
+              IconButton(
+                onPressed: onToggleFavorite,
+                iconSize: 20,
+                visualDensity: VisualDensity.compact,
+                icon: Icon(
+                  isFavorite ? Icons.favorite : Icons.favorite_border,
+                  color: isFavorite
+                      ? const Color.fromARGB(255, 95, 8, 53)
+                      : const Color(0xFF6C5A48),
+                ),
+              ),
+            ],
+          ),
+          Expanded(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Image.asset(
+                item.imagePath,
+                width: double.infinity,
+                fit: BoxFit.cover,
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            item.name,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: Color(0xFF3E2723),
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '\$${item.price}',
+            style: const TextStyle(
+              color: Color(0xFF4E342E),
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 8),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: onBuyNow,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFF8EFE8),
+                foregroundColor: const Color(0xFF5D4037),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: const Text(
+                'Buy Now',
+                style: TextStyle(fontWeight: FontWeight.w700),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _ArrivalBagCardState extends State<ArrivalBagCard> {
