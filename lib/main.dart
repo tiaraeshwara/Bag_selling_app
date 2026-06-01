@@ -2024,10 +2024,10 @@ class _BagPageState extends State<BagPage> {
       builder: (context, pageConstraints) {
         final bool isCompactPage = pageConstraints.maxWidth < 700;
         final double pagePadding = isCompactPage ? 14 : 30;
-        final double heroHeight = isCompactPage ? 320 : 500;
+        final double heroHeight = isCompactPage ? 375 : 550;
         final bool showLeftFilters = pageConstraints.maxWidth >= 1080;
         final double filterTopOffset = showLeftFilters ? 96 : 0;
-        final double topSectionMaxHeight = heroHeight + 150;
+        final double heroLeftInset = showLeftFilters ? 268 : 0;
 
         final Widget topContent = Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -2164,26 +2164,29 @@ class _BagPageState extends State<BagPage> {
               },
             ),
             const SizedBox(height: 20),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(30),
-              child: Container(
-                height: heroHeight,
-                width: double.infinity,
-                decoration: const BoxDecoration(
-                  image: DecorationImage(
-                    image: AssetImage('assets/bag7.jpg'),
-                    fit: BoxFit.cover,
-                  ),
-                ),
+            Padding(
+              padding: EdgeInsets.only(left: heroLeftInset),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(30),
                 child: Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Colors.white.withOpacity(0.12),
-                        Colors.black.withOpacity(0.10),
-                      ],
+                  height: heroHeight,
+                  width: double.infinity,
+                  decoration: const BoxDecoration(
+                    image: DecorationImage(
+                      image: AssetImage('assets/bag4.jpg'),
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.white.withOpacity(0.12),
+                          Colors.black.withOpacity(0.10),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -2274,11 +2277,9 @@ class _BagPageState extends State<BagPage> {
                   Positioned(
                     left: 0,
                     top: filterTopOffset,
-                    width: 252,
-                    child: ConstrainedBox(
-                      constraints: BoxConstraints(
-                        maxHeight: topSectionMaxHeight - filterTopOffset,
-                      ),
+                    width: 255,
+                    child: SizedBox(
+                      height: heroHeight,
                       child: SingleChildScrollView(
                         child: const FiltersSidebar(),
                       ),

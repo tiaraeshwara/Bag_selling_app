@@ -4,65 +4,86 @@ A Flutter storefront UI for browsing and selecting fashion bags, with a glassmor
 
 ## Project Overview
 
-This project is a single Flutter application currently centered in `lib/main.dart`.
+Root widget: `ElegantCosmeticApp` — entry point in `lib/main.dart` (~3,500 lines).
 
-It includes:
-- a responsive navigation layout (desktop + compact/mobile behavior)
-- a featured bag collection and new arrivals carousel
-- saved/favorite products
-- search dialog for bag discovery
-- selected-items billing panel with quantity controls
-- a mock payment confirmation flow
-- login/signup with local persistence via `shared_preferences`
+The app includes:
+- Responsive navigation layout (desktop wide-rail + compact/mobile drawer)
+- Featured bag collection with a new-arrivals carousel
+- Saved / favourite products page
+- Search dialog for bag discovery
+- Selection billing panel with quantity controls
+- Mock payment confirmation flow
+- Login / Signup with local persistence via `shared_preferences`
 
 ## Implemented Features
 
-### 1) Authentication (local/demo)
-- Login and Signup forms
-- Basic credential validation against locally saved credentials
-- Forgot password dialog (UI flow)
-- Logged-in state persisted in local storage
+### 1. Authentication (local / demo)
+- Login and Signup forms with basic credential validation
+- Credentials stored in `SharedPreferences` (demo only — not suitable for production)
+- Forgot-password dialog (UI flow)
+- Authenticated state persisted across sessions
 
-### 2) Shopping Experience
-- New arrivals horizontal slider
-- “View all” bag grid
-- Product metadata (name, price, category, material, color)
-- Add to selection using **Buy Now**
-- Quantity increase/decrease/remove controls
-- Total bill calculation
+### 2. Shopping Experience
+- New-arrivals horizontal slider (`NewArrivalSection`)
+- Full bag grid with "View all" toggle (`BagPage`)
+- Product metadata: name, price, category, material, colour
+- **Buy Now** adds items to the billing panel
+- Quantity increase / decrease / remove controls
+- Running total bill calculation
 
-### 3) Saved/Favorites
-- Toggle favorite on product cards
-- Dedicated Saved page showing selected favorite items
+### 3. Saved / Favourites
+- Heart-toggle on every product card
+- Dedicated `SavedPage` listing all favourited items
 
-### 4) Search
-- Search popup filters bags by name, category, color, and material
-- Triggered from top nav and in-page search field
+### 4. Search
+- Search popup filters bags by name, category, colour, and material
+- Triggered from the top nav bar and the in-page search field
 
-### 5) Demo Payment Flow
-- Collects bank details in a modal
-- Confirmation dialog before payment
-- Success feedback via snackbar
+### 5. Filters Sidebar
+- `FiltersSidebar` widget with category, material, and colour filter chips
+- Filters applied live to the bag grid
+
+### 6. Demo Payment Flow
+- Bank-details modal collects card / account info
+- Confirmation dialog before submitting
+- Success feedback via `SnackBar`
 - Clears selected items after successful payment
 
 ## Tech Stack
 
-- Flutter (Material 3)
-- Dart SDK: `^3.10.7`
-- Dependencies:
-	- `shared_preferences`
-	- `google_fonts`
-	- `cupertino_icons`
+| Layer | Technology |
+|---|---|
+| Framework | Flutter (Material 3) |
+| Language | Dart `^3.10.7` |
+| Fonts | `google_fonts ^6.2.1` |
+| Persistence | `shared_preferences ^2.5.3` |
+| Icons | `cupertino_icons ^1.0.8` |
+
+## Key Components
+
+| Class | Role |
+|---|---|
+| `ElegantCosmeticApp` | App root, theme configuration |
+| `AuthGateway` | Decides login vs. main shell on startup |
+| `AuthSection` | Login / Signup / Forgot-password UI |
+| `MainNavigationLayout` | Top nav bar + page routing |
+| `BagPage` | Main catalogue page |
+| `SavedPage` | Favourites page |
+| `NewArrivalSection` | Horizontal carousel of new arrivals |
+| `FiltersSidebar` | Live filter panel |
+| `BagDescriptionSection` | Inline product description block |
+| `ArrivalBagCard` | Card widget for new-arrival items |
+| `GlassCard` / `GlassImageTile` | Glassmorphism UI primitives |
 
 ## Assets
 
-Bag images are stored in `assets/` (`bag1.jpg` to `bag20.jpg`) and loaded via `pubspec.yaml`.
+24 product images (`bag1.jpg` – `bag24.jpg`) stored in `assets/` and registered in `pubspec.yaml`.
 
 ## Run Locally
 
 ### Prerequisites
-- Flutter SDK installed and available in PATH
-- A configured emulator, simulator, or device
+- Flutter SDK installed and on `PATH`
+- A configured emulator, simulator, or physical device
 
 ### Commands
 ```bash
@@ -77,24 +98,28 @@ flutter analyze
 flutter test
 ```
 
-Note: `test/widget_test.dart` is currently empty, so there are no meaningful widget/unit tests yet.
+> `test/widget_test.dart` is currently a placeholder — no meaningful tests exist yet.
 
-## Project Structure (key files)
+## Project Structure
 
-- `lib/main.dart` - main app entry and all UI/screens/components
-- `pubspec.yaml` - dependencies and asset registration
-- `assets/` - product images
-- `analysis_options.yaml` - lint/analyzer configuration
+```
+lib/
+  main.dart           # All app code (~3,500 lines)
+assets/               # Product images (bag1.jpg – bag24.jpg)
+pubspec.yaml          # Dependencies and asset registration
+analysis_options.yaml
+```
 
 ## Current Limitations
 
-- No backend integration (auth/catalog/payment are local/demo only)
-- Search, filter sidebar, and payment are UI-driven and not connected to APIs
-- Most code currently lives in a single large file (`lib/main.dart`)
+- No backend: auth, catalogue, and payment are all local / demo
+- All screens live in a single `main.dart` file
+- No real state-management solution — state is passed via callbacks
 
-## Suggested Next Improvements
+## Suggested Next Steps
 
-- Split UI into feature-based files (`auth`, `catalog`, `cart`, `shared widgets`)
-- Add real data and service layers
+- Split code into feature folders (`auth/`, `catalog/`, `cart/`, `shared/`)
+- Replace local credential storage with a real auth service
 - Add widget and integration tests
-- Introduce state management as complexity grows (e.g., Riverpod/Bloc/Provider)
+- Introduce a state-management library (e.g., Riverpod, Bloc, or Provider)
+- Connect catalogue and payment to a real backend / API
